@@ -65,4 +65,5 @@ func main() {
 	}
 
 	fmt.Println("running on port", config.port)
+	NewServer(config)
 }
