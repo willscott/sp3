@@ -12,7 +12,7 @@ import (
 
 type Server struct {
 	sync.Mutex
-
+	webServer http.Server
 	config Config
 
 	// the 10 minute timer to clean sending grants
@@ -38,12 +38,14 @@ func clientWebConnect(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewServer(conf Config) *Server {
-	var addr = fmt.Sprintf("0.0.0.0:%d", conf.port)
-
-	http.HandleFunc("/", clientWebConnect)
-	http.ListenAndServe(addr, nil)
+	addr := fmt.Sprintf("0.0.0.0:%d", conf.port)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", clientWebConnect)
+	webServer := &http.Server{Addr: addr, Handler: mux}
+	webServer.ListenAndServe()
 
 	return &Server{
 		config:     conf,
+		webServer:		  *webServer,
 	}
 }
