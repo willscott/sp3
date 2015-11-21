@@ -1,6 +1,7 @@
 package main
 
 import (
+	//"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,32 +21,39 @@ type Server struct {
 }
 
 var upgrader = websocket.Upgrader{}
-func clientWebConnect(w http.ResponseWriter, r *http.Request) {
-	c, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Print("upgrade:", err)
-		return
-	}
-	defer c.Close()
-	for {
-		_, _, err := c.ReadMessage()
+var destinations = make(map[string]*websocket.Conn)
+
+func SocketHandler(server *Server) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			log.Println("read err:", err)
+			return
+		}
+		destinations[r.RemoteAddr] = c
+		defer c.Close()
+		defer delete(destinations, r.RemoteAddr)
+		for {
+			_, _, err := c.ReadMessage()
+			if err != nil {
+				log.Println("read err:", err)
+				break
+			}
 			break
 		}
-		break
-	}
+	})
 }
 
 func NewServer(conf Config) *Server {
+	server := &Server{
+		config:     conf,
+	}
+
 	addr := fmt.Sprintf("0.0.0.0:%d", conf.port)
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", clientWebConnect)
+	mux.Handle("/", SocketHandler(server))
 	webServer := &http.Server{Addr: addr, Handler: mux}
 	webServer.ListenAndServe()
 
-	return &Server{
-		config:     conf,
-		webServer:		  *webServer,
-	}
+	server.webServer = *webServer
+	return server
 }
