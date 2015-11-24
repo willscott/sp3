@@ -47,3 +47,8 @@ sudo ./server [--port 8080]
 
 Sender
 ------
+
+Client
+------
+
+A web based client is included in the `client` directory.
