@@ -56,6 +56,7 @@ func SocketHandler(server *Server) http.Handler {
 		}
 		server.destinations[r.RemoteAddr] = c
 		senderState := CLIENTHELLO
+		var sendStream chan<- []byte
 		challenge := ""
 
 		defer c.Close()
@@ -89,11 +90,15 @@ func SocketHandler(server *Server) http.Handler {
 				}
 				if challenge != "" && challenge == auth.Challenge {
 					senderState = AUTHORIZED
+					// Further messages should now be considered a gopacket packet source.
+					sendStream := CreateStream(auth.DestinationAddress)
+					defer close(sendStream)
 				} else {
 					break
 				}
 			} else if (senderState == AUTHORIZED && msgType == websocket.BinaryMessage) {
 				// Main forwarding loop.
+				sendStream <- msg
 			}
 
 			break

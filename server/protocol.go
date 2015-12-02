@@ -33,6 +33,7 @@ type ServerMessage struct {
 }
 
 type ClientAuthorization struct {
+  DestinationAddress string
   Challenge string
 }
 
