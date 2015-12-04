@@ -12,9 +12,22 @@ import (
   "net"
 )
 
-func CreateStream(destiantion string) chan []byte {
+func CreateStream(destination string) chan []byte {
+  if packet4Conn == nil {
+    SetupSockets()
+  }
+
+  dest := net.ParseIP(destination)
   flow := make(chan []byte)
+  go HandleStream(dest, flow)
   return flow
+}
+
+func HandleStream(dest net.IP, que chan []byte) {
+  for {
+    req := <-que
+    ConditionalForward(req, dest)
+  }
 }
 
 var (
