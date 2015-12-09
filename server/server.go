@@ -5,10 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
-	"strings"
 	"sync"
-	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/pborman/uuid"
@@ -20,32 +19,46 @@ type Server struct {
 	webServer http.Server
 	config Config
 	destinations map[string]*websocket.Conn
-
-	// the 10 minute timer to clean sending grants
-	lastSweepTime     time.Time
+  clientHosts map[string]*websocket.Conn
 }
 
 func (s Server) Authorize(hello ClientHello) (challenge string, err error) {
 	if (hello.AuthenticationMethod != WEBSOCKET) {
 		return "", errors.New("UNSUPPORTED")
 	}
-	addrParts := strings.Split(hello.DestinationAddress, ":")
-	if (len(addrParts) < 1) {
+	addrHost, _, err := net.SplitHostPort(hello.DestinationAddress)
+	if err != nil {
 		return "", errors.New("UNSUPPORTED")
 	}
-	for addr,conn := range s.destinations {
-		if (strings.HasPrefix(addr, addrParts[0])) {
-			// Found the connection
-			challenge := uuid.New()
-			if err = conn.WriteMessage(websocket.TextMessage, []byte(challenge)); err != nil {
-				return "", err
-	    }
-			return challenge, nil;
-			break
+	if val, ok := s.clientHosts[addrHost]; ok {
+		challenge := uuid.New()
+		if err = val.WriteMessage(websocket.TextMessage, []byte(challenge)); err != nil {
+			return "", err
 		}
+		return challenge, nil;
 	}
 
 	return "", nil
+}
+
+func (s Server) Cleanup(remoteAddr string) {
+	if conn, ok := s.destinations[remoteAddr]; ok {
+		conn.Close()
+		delete(s.destinations, remoteAddr)
+		if addrHost, _, err := net.SplitHostPort(remoteAddr); err == nil {
+			if cc, ok := s.clientHosts[addrHost]; ok && cc == conn {
+				delete(s.clientHosts, addrHost)
+
+				// See if there's another connection from the same address to promote.
+				for addr, otherConn := range s.destinations {
+					if destAddr, _, err := net.SplitHostPort(addr); err == nil && destAddr == addrHost {
+						s.clientHosts[destAddr] = otherConn
+						break
+					}
+				}
+			}
+		}
+	}
 }
 
 func SocketHandler(server *Server) http.Handler {
@@ -54,13 +67,18 @@ func SocketHandler(server *Server) http.Handler {
 		if err != nil {
 			return
 		}
-		server.destinations[r.RemoteAddr] = c
+		addrHost, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			return
+		}
+		if _, ok := server.clientHosts[addrHost]; !ok {
+			server.clientHosts[addrHost] = c
+		}
 		senderState := CLIENTHELLO
 		var sendStream chan<- []byte
 		challenge := ""
 
-		defer c.Close()
-		defer delete(server.destinations, r.RemoteAddr)
+		defer server.Cleanup(r.RemoteAddr)
 		for {
 			msgType, msg, err := c.ReadMessage()
 			if err != nil {
@@ -74,6 +92,7 @@ func SocketHandler(server *Server) http.Handler {
 					log.Println("Hello err:", err)
 					break
 				}
+
 				chal, err := server.Authorize(hello);
 				if err != nil {
 					log.Println("Authorize err:", err)
@@ -81,6 +100,7 @@ func SocketHandler(server *Server) http.Handler {
 				}
 				challenge = chal
 				senderState = HELLORECEIVED
+				continue
 			} else if (senderState == HELLORECEIVED && msgType == websocket.TextMessage) {
 				auth := ClientAuthorization{}
 				err := json.Unmarshal(msg, &auth)
@@ -96,11 +116,14 @@ func SocketHandler(server *Server) http.Handler {
 				} else {
 					break
 				}
+				continue
 			} else if (senderState == AUTHORIZED && msgType == websocket.BinaryMessage) {
 				// Main forwarding loop.
 				sendStream <- msg
+				continue
 			}
-
+			// Else - unexpected message
+			log.Println("Unexpected message", msg)
 			break
 		}
 	})

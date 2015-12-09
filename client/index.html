@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SP^3 Demo</title>
+  </head>
+  <body>
+    <header>
+      <h1>SP<sup>3</sup></h1>
+      <h3>A Simple, Practical, and Safe Packet Spoofing Protocol</h3>
+    </header>
+    <section>
+      <h2>Instructions</h2>
+      <p>
+        This demo implements a combined Client and Sender. It instructs a
+        remote SP<sup>3</sup> server to send it an arbitrarily crafted UDP
+        packet as a demonstration of the protocol.
+      </p>
+      <p style="color:red">
+        Note: The basic demonstration of this capability does not handle NAT
+        translations, and will only work if your machine has a publically
+        accessible IP address.
+      </p>
+      <p>
+        First, choose a port, and listen for incoming traffic, using e.g.
+        <code>
+          nc -u -l 8080
+        </code>.
+        Next, verify the packet to be sent below has the expected host, and
+        port automatically detected, and make other desired changes.
+        Finally, send the packet, and if all goes well the payload will be
+        displayed by netcat.
+      </p>
+    </section>
+    <section id="demo">
+      <h2>Demo</h2>
+      <textarea id="packet"></textarea>
+      <br />
+      <input type="button" value="Reset" />
+      <input type="button" value="Send" />
+    </section>
+  </body>
+</html>
