@@ -26,11 +26,7 @@ func (s Server) Authorize(hello ClientHello) (challenge string, err error) {
 	if (hello.AuthenticationMethod != WEBSOCKET) {
 		return "", errors.New("UNSUPPORTED")
 	}
-	addrHost, _, err := net.SplitHostPort(hello.DestinationAddress)
-	if err != nil {
-		return "", errors.New("UNSUPPORTED")
-	}
-	if val, ok := s.clientHosts[addrHost]; ok {
+	if val, ok := s.clientHosts[hello.DestinationAddress]; ok {
 		challenge := uuid.New()
 		if err = val.WriteMessage(websocket.TextMessage, []byte(challenge)); err != nil {
 			return "", err
@@ -38,7 +34,7 @@ func (s Server) Authorize(hello ClientHello) (challenge string, err error) {
 		return challenge, nil;
 	}
 
-	return "", nil
+	return "", errors.New("No active connection from requested destination.")
 }
 
 func (s Server) Cleanup(remoteAddr string) {
@@ -133,6 +129,7 @@ func NewServer(conf Config) *Server {
 	server := &Server{
 		config:     conf,
 		destinations: make(map[string]*websocket.Conn),
+		clientHosts: make(map[string]*websocket.Conn),
 	}
 
 	addr := fmt.Sprintf("0.0.0.0:%d", conf.port)
