@@ -41,7 +41,7 @@ func SetupSockets() {
   var err error
   ipv4Parser = gopacket.NewDecodingLayerParser(layers.LayerTypeIPv4, &ipv4Layer)
 
-  packet4Conn, err = net.ListenPacket("ip4", "127.0.0.1")
+  packet4Conn, err = net.ListenPacket("ip4:0", "127.0.0.1")
   if err != nil {
     panic(err)
   }
