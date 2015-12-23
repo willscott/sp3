@@ -2,6 +2,13 @@
 <html>
   <head>
     <title>SP^3 Demo</title>
+    <meta charset="utf-8" />
+    <script src="packeteditor.js"></script>
+    <script type="text/javascript">
+      window.addEventListener('load', function () {
+        var editor = new PacketEditor(document.getElementById("packet"), [], 16);
+      }, true);
+    </script>
   </head>
   <body>
     <header>
@@ -33,7 +40,7 @@
     </section>
     <section id="demo">
       <h2>Demo</h2>
-      <textarea id="packet"></textarea>
+      <textarea id="packet">qwertyiop</textarea>
       <br />
       <input type="button" value="Reset" />
       <input type="button" value="Send" />
