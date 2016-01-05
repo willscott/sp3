@@ -5,10 +5,19 @@
     <meta charset="utf-8" />
     <script src="packeteditor.js"></script>
     <script type="text/javascript">
+      var fields = [
+        new PacketField("Source IP", 24, 4, function (x) {return x;}, function(x) {return x;})
+      ];
       window.addEventListener('load', function () {
-        var editor = new PacketEditor(document.getElementById("packet"), [], 16);
+        var editor = new PacketEditor(document.getElementById("packet"), fields, 16);
       }, true);
     </script>
+    <style type="text/css">
+    .editorLine {
+      display:block;
+      font-size: 1.2em;
+    }
+    </style>
   </head>
   <body>
     <header>
@@ -40,7 +49,7 @@
     </section>
     <section id="demo">
       <h2>Demo</h2>
-      <textarea id="packet">qwertyiop</textarea>
+      <textarea id="packet">4500002914c800004011d00c0a00071c80d00404d798041d0015322f48656c6c6f20576f726c64210a</textarea>
       <br />
       <input type="button" value="Reset" />
       <input type="button" value="Send" />

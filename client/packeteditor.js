@@ -63,7 +63,7 @@ PacketEditor.prototype.render = function () {
   // position fields.
   this.fields.forEach(function (field) {
     var offset = field.offset;
-    var line = this.lines[math.floor(offset / this.width)];
+    var line = this.lines[Math.floor(offset / this.width)];
     if (line) {
       line.addField(offset % this.width, field);
     }
@@ -97,14 +97,16 @@ PacketEditorLine.prototype.render = function (into) {
   while (i < this.value.length) {
       var run = document.createElement('span');
       run.className = 'editorRun';
-      next = offsets.pop();
+      next = offsets[0];
       if (next === undefined) {
         run.innerHTML = this.value.substr(i);
         i = this.value.length;
       } else if (next == i) {
         this.fields[next].value = this.value.substr(next, this.fields[next].length);
+        console.log('rendering ' + next);
         this.fields[next].render(run);
         i += this.fields[next].length;
+        offsets.shift()
       } else {
         run.innerHTML = this.value.substr(i, next - i);
         i = next;
