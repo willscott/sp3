@@ -6,7 +6,12 @@
     <script src="packeteditor.js"></script>
     <script type="text/javascript">
       var fields = [
-        new PacketField("Source IP", 24, 4, function (x) {return x;}, function(x) {return x;})
+        new PacketField("Source IP", 24, 8, function (x) {return x;}, function(x) {return x;}),
+        new PacketField("Destination IP", 32, 8, function (x) {return x;}, function(x) {return x;}),
+        new PacketField("Source Port", 40, 4, function(x) {return x;}, function(x) {return x;}),
+        new PacketField("Destination Port", 44, 4, function(x) {return x;}, function(x) {return x;}),
+        new PacketField("Checksum", 52, 4, function(x) {return x;}, function(x) {return x;}),
+        new PacketField("Payload", 56, 26, function(x) {return x;}, function(x) {return x;})
       ];
       window.addEventListener('load', function () {
         var editor = new PacketEditor(document.getElementById("packet"), fields, 16);
