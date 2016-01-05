@@ -11,8 +11,8 @@
         new PacketField("Dest IP", 32, 8, hex2ip, ip2hex),
         new PacketField("Src Port", 40, 4, hex2port, port2hex),
         new PacketField("Dest Port", 44, 4, hex2port, port2hex),
-        new PacketField("Chksum", 52, 4, function(x) {return x;}, function(x) {return x;}),
-        new PacketField("Payload", 56, 26, hex2ascii, function(x) {return x;})
+        new PacketField("Chksum", 52, 4, identity, identity),
+        new PacketField("Payload", 56, 26, hex2ascii, ascii2hex)
       ];
       fields[4].background = '#fcf';
       fields[5].background = '#cff';

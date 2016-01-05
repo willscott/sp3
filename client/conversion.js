@@ -32,3 +32,15 @@ function hex2ascii(hex) {
   }
   return txt;
 }
+function ascii2hex(ascii) {
+  return ascii.split('').map(function(char) {
+    var hex = char.charCodeAt(0).toString(16);
+    if (hex.length < 2) {
+      hex = '0' + hex;
+    }
+    return hex;
+  }).join('');
+}
+function identity(value) {
+  return value;
+}

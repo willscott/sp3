@@ -126,9 +126,7 @@ PacketEditorLine.prototype.render = function (into) {
         this.fields[next].value = this.value.substr(next, this.fields[next].length);
         this.fields[next].render(run);
         i += this.fields[next].length;
-        if (i > next) {
-          offsets.shift()
-        }
+        offsets.shift();
       } else {
         run.innerHTML = this.value.substr(i, next - i);
         i = next;
