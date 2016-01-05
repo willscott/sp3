@@ -11,21 +11,39 @@ var PacketField = function (label, offset, length, toText, toHex) {
 };
 
 PacketField.prototype.render = function (into) {
-  into.style.display='inline-block';
+  into.style.display = 'inline-block';
+  into.style.position = 'relative';
   into.style.background = this.background;
   var val = document.createElement('span');
-  val.innerText = this.value;
+  val.innerHTML = this.value;
   into.appendChild(val);
   var label = document.createElement('span');
-  label.innerText = this.label;
+  label.style.position = 'absolute';
+  label.style.left = 0;
+  label.style.top = '-0.7em';
+  label.style.fontSize = '0.8em';
+  label.innerHTML = this.label;
   into.appendChild(label);
   var input = document.createElement('input');
   input.value = this.toText(this.value);
+  input.style.display = 'none';
+  input.style.border = '1px solid black';
+  input.style.width = this.length * 0.7 + 'em';
   input.addEventListener('change', function() {
     this.value = this.toHex(input.value);
     this.onChange();
   }.bind(this), true);
+  input.addEventListener('blur', function(input, val) {
+    input.style.display = 'none';
+    val.style.display = 'inline';
+    val.innerHTML = this.value;
+  }.bind(this, input, val), true);
   into.appendChild(input);
+
+  val.addEventListener('click', function (input) {
+    this.style.display = 'none';
+    input.style.display = 'block';
+  }.bind(val, input), true);
 };
 
 PacketField.prototype.onChange = function () {};
@@ -54,9 +72,9 @@ PacketEditor.prototype.render = function () {
       text = "";
     }
     line.onChange = function(offset, line) {
-      var oldValue = this.el.value;
+      var oldValue = this.el.value.split('');
       oldValue.splice(offset, this.width, line.value);
-      this.el.value = oldValue;
+      this.el.value = oldValue.join('');
     }.bind(this, this.lines.length * this.width, line);
     this.lines.push(line);
   }
@@ -84,7 +102,9 @@ PacketEditorLine.prototype.addField = function (offset, field) {
   this.fields[offset] = field;
   this.offsets.push(offset);
   field.onChange = function (offset, field) {
-    this.value.splice(offset, field.length, field.value);
+    var vals = this.value.split('');
+    vals.splice(offset, field.length, field.value);
+    this.value = vals.join('');
     this.onChange();
   }.bind(this, offset, field);
 };
@@ -103,7 +123,6 @@ PacketEditorLine.prototype.render = function (into) {
         i = this.value.length;
       } else if (next == i) {
         this.fields[next].value = this.value.substr(next, this.fields[next].length);
-        console.log('rendering ' + next);
         this.fields[next].render(run);
         i += this.fields[next].length;
         offsets.shift()
