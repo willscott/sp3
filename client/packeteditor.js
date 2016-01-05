@@ -49,6 +49,40 @@ PacketField.prototype.render = function (into) {
 
 PacketField.prototype.onChange = function () {};
 
+var ComputedField = function (label, offset, length, compute) {
+  this.label = label;
+  this.offset = offset;
+  this.length = length;
+  this.compute = compute;
+  this.background = '#fcf';
+};
+
+ComputedField.prototype.render = function (into) {
+  into.style.display = 'inline-block';
+  into.style.position = 'relative';
+  into.style.background = this.background;
+  var val = document.createElement('span');
+  val.innerHTML = this.value;
+  into.appendChild(val);
+  var label = document.createElement('span');
+  label.style.position = 'absolute';
+  label.style.left = 0;
+  label.style.top = '-0.7em';
+  label.style.fontSize = '0.40em';
+  label.innerHTML = this.label;
+  into.appendChild(label);
+};
+
+ComputedField.prototype.recompute = function (packet) {
+  var value = this.compute(packet);
+  if (value != this.value) {
+    this.value = value;
+    this.onChange();
+  }
+};
+
+ComputedField.prototype.onChange = function () {};
+
 var PacketEditor = function (element, fields, width) {
   this.el = element;
   this.el.style.display = 'none';
@@ -59,6 +93,14 @@ var PacketEditor = function (element, fields, width) {
   this.width = width;
   this.lines = [];
   this.render();
+};
+
+PacketEditor.prototype.recompute = function () {
+  for (var i = 0; i < this.fields.length; i += 1) {
+    if (this.fields[i].recompute) {
+      this.fields[i].recompute(this.el.value);
+    }
+  }
 };
 
 PacketEditor.prototype.render = function () {
@@ -76,6 +118,7 @@ PacketEditor.prototype.render = function () {
       var oldValue = this.el.value.split('');
       oldValue.splice(offset, this.width, line.value);
       this.el.value = oldValue.join('');
+      this.recompute();
     }.bind(this, this.lines.length * this.width, line);
     this.lines.push(line);
   }

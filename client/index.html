@@ -7,15 +7,17 @@
     <script src="conversion.js"></script>
     <script type="text/javascript">
       var fields = [
+        new ComputedField("Len", 4, 4, totalLength),
+        new ComputedField("Chksum", 20, 4, ipChecksum),
         new PacketField("Src IP", 24, 8, hex2ip, ip2hex),
         new PacketField("Dest IP", 32, 8, hex2ip, ip2hex),
         new PacketField("Src Port", 40, 4, hex2port, port2hex),
         new PacketField("Dest Port", 44, 4, hex2port, port2hex),
-        new PacketField("Chksum", 52, 4, identity, identity),
+        new ComputedField("Len", 48, 4, udpLength),
+        new ComputedField("Chksum", 52, 4, udpChecksum),
         new PacketField("Payload", 56, 26, hex2ascii, ascii2hex)
       ];
-      fields[4].background = '#fcf';
-      fields[5].background = '#cff';
+      fields[8].background = '#cff';
       window.addEventListener('load', function () {
         var editor = new PacketEditor(document.getElementById("packet"), fields, 16);
       }, true);

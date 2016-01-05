@@ -1,3 +1,9 @@
+function htons(hex) {
+  while (hex.length < 4) {
+    hex = '0' + hex;
+  }
+  return hex[2] + hex[3] + hex[0] + hex[1];
+}
 function hex2ip(hex) {
   var ip = '';
   for (var i = 0; i < hex.length - 1; i += 2) {
@@ -15,15 +21,12 @@ function ip2hex(ip) {
   }).join('');
 }
 function hex2port(hex) {
-  var val = parseInt(hex, 16);
+  var val = parseInt(htons(hex), 16);
   return val;
 }
 function port2hex(port) {
   var val = parseInt(port, 10).toString(16);
-  while (val.length < 4) {
-    val = '0' + val;
-  }
-  return val;
+  return htons(val);
 }
 function hex2ascii(hex) {
   var txt = '';
@@ -43,4 +46,55 @@ function ascii2hex(ascii) {
 }
 function identity(value) {
   return value;
+}
+function totalLength(packet) {
+  return htons(packet.length.toString(16));
+}
+function ipChecksum(packet) {
+  var header = packet.substr(0, 40);
+  //checksum is 0 during recalculation
+  header[20] = '0';
+  header[21] = '0';
+  header[22] = '0';
+  header[23] = '0';
+  return onesComplement(header);
+}
+function udpLength(packet) {
+  return htons((packet.length - 40).toString(16));
+}
+function udpChecksum(packet) {
+  var header =
+      packet.substr(24, 8) + // srcip
+      packet.substr(32, 8) + // destip
+      "00" +
+      packet.substr(18, 2) + // protocol
+      packet.substr(48, 4) + // length
+      packet.substr(40); // udp header + data.
+  while (header.length % 4 !== 0) {
+    header += '0';
+  }
+  return onesComplement(header);
+}
+function onesComplement(hex) {
+  var i;
+  while (hex.length > 4) {
+    var sum = 0;
+    for (i = 0; i < hex.length - 1; i += 4) {
+      sum += parseInt(hex.substr(i, 4), 16);
+    }
+    hex = sum.toString(16);
+  }
+  var binary = parseInt(hex, 16).toString(2);
+  while (binary.length < 16) {
+    binary = "0" + binary;
+  }
+  var out = '';
+  for (i = 0; i < 16; i += 1) {
+    if (binary[i] == "0") {
+      out += "1";
+    } else {
+      out += "0";
+    }
+  }
+  return parseInt(out, 2).toString(16);
 }
