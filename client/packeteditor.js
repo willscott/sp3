@@ -21,14 +21,14 @@ PacketField.prototype.render = function (into) {
   label.style.position = 'absolute';
   label.style.left = 0;
   label.style.top = '-0.7em';
-  label.style.fontSize = '0.8em';
+  label.style.fontSize = '0.40em';
   label.innerHTML = this.label;
   into.appendChild(label);
   var input = document.createElement('input');
   input.value = this.toText(this.value);
   input.style.display = 'none';
   input.style.border = '1px solid black';
-  input.style.width = this.length * 0.7 + 'em';
+  input.style.width = this.length + 'em';
   input.addEventListener('change', function() {
     this.value = this.toHex(input.value);
     this.onChange();
@@ -43,6 +43,7 @@ PacketField.prototype.render = function (into) {
   val.addEventListener('click', function (input) {
     this.style.display = 'none';
     input.style.display = 'block';
+    input.focus();
   }.bind(val, input), true);
 };
 
@@ -112,7 +113,7 @@ PacketEditorLine.prototype.addField = function (offset, field) {
 PacketEditorLine.prototype.render = function (into) {
   var el = document.createElement('span');
   el.className = 'editorLine';
-  var offsets = this.offsets.sort();
+  var offsets = this.offsets.sort(function(a,b) {return a - b;});
   var i = 0, next;
   while (i < this.value.length) {
       var run = document.createElement('span');
@@ -125,7 +126,9 @@ PacketEditorLine.prototype.render = function (into) {
         this.fields[next].value = this.value.substr(next, this.fields[next].length);
         this.fields[next].render(run);
         i += this.fields[next].length;
-        offsets.shift()
+        if (i > next) {
+          offsets.shift()
+        }
       } else {
         run.innerHTML = this.value.substr(i, next - i);
         i = next;

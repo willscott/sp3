@@ -7,12 +7,12 @@
     <script src="conversion.js"></script>
     <script type="text/javascript">
       var fields = [
-        new PacketField("Source IP", 24, 8, hex2ip, ip2hex),
+        new PacketField("Src IP", 24, 8, hex2ip, ip2hex),
         new PacketField("Dest IP", 32, 8, hex2ip, ip2hex),
-        new PacketField("Source Port", 40, 4, function(x) {return x;}, function(x) {return x;}),
-        new PacketField("Dest Port", 44, 4, function(x) {return x;}, function(x) {return x;}),
+        new PacketField("Src Port", 40, 4, hex2port, port2hex),
+        new PacketField("Dest Port", 44, 4, hex2port, port2hex),
         new PacketField("Chksum", 52, 4, function(x) {return x;}, function(x) {return x;}),
-        new PacketField("Payload", 56, 26, function(x) {return x;}, function(x) {return x;})
+        new PacketField("Payload", 56, 26, hex2ascii, function(x) {return x;})
       ];
       fields[4].background = '#fcf';
       fields[5].background = '#cff';
@@ -23,7 +23,7 @@
     <style type="text/css">
     .editorLine {
       display:block;
-      font-size: 1.2em;
+      font-size: 2em;
       padding-top: 0.8em;
     }
     </style>
