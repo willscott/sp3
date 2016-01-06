@@ -96,10 +96,19 @@ var PacketEditor = function (element, fields, width) {
 };
 
 PacketEditor.prototype.recompute = function () {
+  if (this.recomputing) {
+    return;
+  }
+  var oldvalue = this.el.value;
+  this.recomputing = true;
   for (var i = 0; i < this.fields.length; i += 1) {
     if (this.fields[i].recompute) {
-      this.fields[i].recompute(this.el.value);
+      this.fields[i].recompute(oldvalue);
     }
+  }
+  this.recomputing = false;
+  if (this.el.value != oldvalue) {
+    this.recompute();
   }
 };
 
@@ -146,10 +155,13 @@ PacketEditorLine.prototype.addField = function (offset, field) {
   this.fields[offset] = field;
   this.offsets.push(offset);
   field.onChange = function (offset, field) {
-    var vals = this.value.split('');
+    var oldvalue = this.value;
+    var vals = oldvalue.split('');
     vals.splice(offset, field.length, field.value);
     this.value = vals.join('');
-    this.onChange();
+    if (this.value != oldvalue) {
+      this.onChange();
+    }
   }.bind(this, offset, field);
 };
 

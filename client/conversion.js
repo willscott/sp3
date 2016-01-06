@@ -69,7 +69,9 @@ function udpChecksum(packet) {
       "00" +
       packet.substr(18, 2) + // protocol
       packet.substr(48, 4) + // length
-      packet.substr(40); // udp header + data.
+      packet.substr(40, 12) + // udp header
+      "0000" + // empty udp checksum field.
+      packet.substr(56); // data.
   while (header.length % 4 !== 0) {
     header += '0';
   }
