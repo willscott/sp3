@@ -15,13 +15,19 @@
         new PacketField("Dest Port", 44, 4, hex2port, port2hex),
         new ComputedField("Len", 48, 4, udpLength),
         new ComputedField("Chksum", 52, 4, udpChecksum),
-        new PacketField("Payload", 56, 26, hex2ascii, ascii2hex)
+        new VarLenField("Payload", 56, hex2ascii, ascii2hex)
       ];
       fields[8].background = '#cff';
       window.addEventListener('load', function () {
         var editor = new PacketEditor(document.getElementById("packet"), fields, 16);
       }, true);
+      function externalip(dat) {
+        console.log("Learned your IP is " + dat.ip);
+        fields[3].value = fields[3].toHex(dat.ip);
+        fields[3].onChange();
+      }
     </script>
+    <script type="text/javascript" src="https://api.ipify.org?format=jsonp&callback=externalip"></script>
     <style type="text/css">
     .editorLine {
       display:block;
@@ -60,7 +66,7 @@
     </section>
     <section id="demo">
       <h2>Demo</h2>
-      <textarea id="packet">4500002914c800004011d00c0a00071c80d00404d798041d0015322f48656c6c6f20576f726c64210a</textarea>
+      <textarea id="packet">4500002914c800004011d00c0a00071c80d00404d7981f900015322f48656c6c6f20576f726c64210a</textarea>
       <br />
       <input type="button" value="Reset" />
       <input type="button" value="Send" />

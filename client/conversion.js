@@ -1,8 +1,8 @@
-function htons(hex) {
+function pad(hex) {
   while (hex.length < 4) {
     hex = '0' + hex;
   }
-  return hex[2] + hex[3] + hex[0] + hex[1];
+  return hex;
 }
 function hex2ip(hex) {
   var ip = '';
@@ -21,12 +21,12 @@ function ip2hex(ip) {
   }).join('');
 }
 function hex2port(hex) {
-  var val = parseInt(htons(hex), 16);
+  var val = parseInt(hex, 16);
   return val;
 }
 function port2hex(port) {
   var val = parseInt(port, 10).toString(16);
-  return htons(val);
+  return pad(val);
 }
 function hex2ascii(hex) {
   var txt = '';
@@ -48,7 +48,7 @@ function identity(value) {
   return value;
 }
 function totalLength(packet) {
-  return htons(packet.length.toString(16));
+  return pad(packet.length.toString(16));
 }
 function ipChecksum(packet) {
   var header = packet.substr(0, 40);
@@ -60,7 +60,7 @@ function ipChecksum(packet) {
   return onesComplement(header);
 }
 function udpLength(packet) {
-  return htons((packet.length - 40).toString(16));
+  return pad((packet.length - 40).toString(16));
 }
 function udpChecksum(packet) {
   var header =

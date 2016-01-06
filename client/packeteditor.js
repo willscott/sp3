@@ -49,6 +49,11 @@ PacketField.prototype.render = function (into) {
 
 PacketField.prototype.onChange = function () {};
 
+var VarLenField = function (label, offset, toText, toHex) {
+  PacketField.call(this, label, offset, 0, toText, toHex);
+  this.render = PacketField.prototype.render;
+};
+
 var ComputedField = function (label, offset, length, compute) {
   this.label = label;
   this.offset = offset;
@@ -63,6 +68,7 @@ ComputedField.prototype.render = function (into) {
   into.style.background = this.background;
   var val = document.createElement('span');
   val.innerHTML = this.value;
+  this.el = val;
   into.appendChild(val);
   var label = document.createElement('span');
   label.style.position = 'absolute';
@@ -77,6 +83,7 @@ ComputedField.prototype.recompute = function (packet) {
   var value = this.compute(packet);
   if (value != this.value) {
     this.value = value;
+    this.el.innerHTML = value;
     this.onChange();
   }
 };
