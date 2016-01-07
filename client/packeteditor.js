@@ -49,9 +49,8 @@ PacketField.prototype.render = function (into) {
 
 PacketField.prototype.onChange = function () {};
 
-var VarLenField = function (label, offset, toText, toHex, value) {
+var VarLenField = function (label, offset, toText, toHex) {
   PacketField.call(this, label, offset, 0, toText, toHex);
-  this.value = value;
 };
 
 VarLenField.prototype.toEdit = function () {
@@ -67,6 +66,7 @@ VarLenField.prototype.toEdit = function () {
 };
 
 VarLenField.prototype.render = function (into) {
+  console.log('this.value is ' + this.value);
   into.style.display = 'inline-block';
   into.style.position = 'relative';
   into.style.height = '1em';
@@ -211,6 +211,7 @@ PacketEditor.prototype.render = function () {
       }
       field.lines = lines;
       field.value = this.el.value.substr(offset);
+      console.log('field.value is ' + field.value);
     }
   }.bind(this));
   // render output.
@@ -253,7 +254,9 @@ PacketEditorLine.prototype.render = function (into) {
         run.innerHTML = this.value.substr(i);
         i = this.value.length;
       } else if (next == i) {
-        this.fields[next].value = this.value.substr(next, this.fields[next].length);
+        if (this.fields[next].length) {
+          this.fields[next].value = this.value.substr(next, this.fields[next].length);
+        }
         this.fields[next].render(run);
         i += this.fields[next].length;
         offsets.shift();
