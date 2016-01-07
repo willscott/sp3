@@ -49,9 +49,67 @@ PacketField.prototype.render = function (into) {
 
 PacketField.prototype.onChange = function () {};
 
-var VarLenField = function (label, offset, toText, toHex) {
+var VarLenField = function (label, offset, toText, toHex, value) {
   PacketField.call(this, label, offset, 0, toText, toHex);
-  this.render = PacketField.prototype.render;
+  this.value = value;
+};
+
+VarLenField.prototype.toEdit = function () {
+  this.lines.forEach(function(line) {
+    if (line.el) {
+      line.el.style.display = 'none';
+    } else {
+      line.style.display = 'none';
+    }
+  });
+  this.input.style.display = 'block';
+  this.input.focus();
+};
+
+VarLenField.prototype.render = function (into) {
+  into.style.display = 'inline-block';
+  into.style.position = 'relative';
+  into.style.height = '1em';
+  var label = document.createElement('span');
+  label.style.position = 'absolute';
+  label.style.left = 0;
+  label.style.top = '-0.7em';
+  label.style.fontSize = '0.40em';
+  label.innerHTML = this.label;
+  into.appendChild(label);
+  var input = document.createElement('textarea');
+  input.value = this.toText(this.value);
+  input.style.display = 'none';
+  input.style.border = '1px solid black';
+  input.style.width = '100%';
+  input.addEventListener('change', function() {
+    this.value = this.toHex(input.value);
+    this.onChange();
+  }.bind(this), true);
+  input.addEventListener('blur', function(input) {
+    input.style.display = 'none';
+    this.lines.forEach(function (line) {
+      if (line.el) {
+        line.el.style.display = 'block';
+      } else {
+        line.style.display = 'inline-block';
+      }
+    });
+    //val.style.display = 'inline';
+    //val.innerHTML = this.value;
+  }.bind(this, input), true);
+  into.appendChild(input);
+  this.input = input;
+  setTimeout(function () {
+    this.lines[0] = this.lines[0].el.lastChild;
+    this.lines.forEach(function (line) {
+      if (line.el) {
+        line.el.addEventListener('click', this.toEdit.bind(this));
+      } else {
+        line.addEventListener('click', this.toEdit.bind(this));
+      }
+    }.bind(this));
+  }.bind(this), 0);
 };
 
 var ComputedField = function (label, offset, length, compute) {
@@ -123,7 +181,7 @@ PacketEditor.prototype.render = function () {
   var text = this.el.value;
   // Recalculate lines.
   this.lines = [];
-  while(text.length > 0) {
+  while (text.length > 0) {
     var line = new PacketEditorLine(text.substr(0, this.width));
     if (text.length > this.width) {
       text = text.substr(this.width);
@@ -132,7 +190,7 @@ PacketEditor.prototype.render = function () {
     }
     line.onChange = function(offset, line) {
       var oldValue = this.el.value.split('');
-      oldValue.splice(offset, this.width, line.value);
+      oldValue.splice(offset, line.value.length, line.value);
       this.el.value = oldValue.join('');
       this.recompute();
     }.bind(this, this.lines.length * this.width, line);
@@ -144,6 +202,15 @@ PacketEditor.prototype.render = function () {
     var line = this.lines[Math.floor(offset / this.width)];
     if (line) {
       line.addField(offset % this.width, field);
+    }
+    // indefinite fields learn about subsequent lines
+    if (!field.length) {
+      var lines = [];
+      for (var i = Math.floor(offset / this.width); i < this.lines.length; i += 1) {
+        lines.push(this.lines[i]);
+      }
+      field.lines = lines;
+      field.value = this.el.value.substr(offset);
     }
   }.bind(this));
   // render output.
@@ -175,6 +242,7 @@ PacketEditorLine.prototype.addField = function (offset, field) {
 PacketEditorLine.prototype.render = function (into) {
   var el = document.createElement('span');
   el.className = 'editorLine';
+  this.el = el;
   var offsets = this.offsets.sort(function(a,b) {return a - b;});
   var i = 0, next;
   while (i < this.value.length) {
