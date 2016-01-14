@@ -127,6 +127,12 @@ func SocketHandler(server *Server) http.Handler {
 						break
 					}
 				} else {
+					log.Println("Bad Challenge from %s", r.RemoteAddr)
+					resp := ServerMessage{
+						Status: UNAUTHORIZED,
+					}
+					dat, _ := json.Marshal(resp)
+					c.WriteMessage(websocket.TextMessage, dat)
 					break
 				}
 				continue
