@@ -35,7 +35,7 @@ func (s Server) Authorize(hello ClientHello) (challenge string, err error) {
 		if err = val.WriteMessage(websocket.TextMessage, dat); err != nil {
 			return "", err
 		}
-		return challenge, nil;
+		return resp.Challenge, nil;
 	}
 
 	return "", errors.New("No active connection from requested destination.")
@@ -127,7 +127,7 @@ func SocketHandler(server *Server) http.Handler {
 						break
 					}
 				} else {
-					log.Println("Bad Challenge from", r.RemoteAddr)
+					log.Println("Bad Challenge from", r.RemoteAddr, " expected ", auth.Challenge, " but got ", challenge)
 					resp := ServerMessage{
 						Status: UNAUTHORIZED,
 					}
