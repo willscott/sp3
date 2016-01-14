@@ -35,17 +35,19 @@
         socket.onmessage = function(msg) {
           var data = JSON.parse(msg.data);
           if (data.Status === 0 && connectState === 1) { //okay
+            console.log("Authorization Challenged.");
             var ip = document.getElementById("destination").value;
-            socket.send(JSON.serialize({
+            socket.send(JSON.stringify({
               DestinationAddress: ip,
               Challenge: data.Challenge
             }));
             connectState = 2;
           } else if (data.Status === 0 && connectState === 2) {
+            console.log("Authorization Complete");
             // Authorized and ready to send.
             var buf = hext2AB(document.getElementById("packet").value);
             socket.send(buf.buffer);
-          } else if (data.Status > 1) { //error
+          } else if (data.Status > 0) { //error
             console.error("Server Error: " + data.Status);
             return;
           }
@@ -53,7 +55,7 @@
         socket.onopen = function () {
           connectState = 1;
           var ip = document.getElementById("destination").value;
-          socket.send(JSON.serialize({
+          socket.send(JSON.stringify({
             DestinationAddress: ip,
             AuthenticationMethod: 0
           }));

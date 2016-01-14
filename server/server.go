@@ -96,6 +96,11 @@ func SocketHandler(server *Server) http.Handler {
 				chal, err := server.Authorize(hello);
 				if err != nil {
 					log.Println("Authorize err:", err)
+					resp := ServerMessage{
+						Status: UNAUTHORIZED,
+					}
+					dat, _ := json.Marshal(resp)
+					c.WriteMessage(websocket.TextMessage, dat)
 					break
 				}
 				challenge = chal
@@ -146,7 +151,10 @@ func NewServer(conf Config) *Server {
 
 	addr := fmt.Sprintf("0.0.0.0:%d", conf.port)
 	mux := http.NewServeMux()
-	mux.Handle("/", SocketHandler(server))
+	mux.Handle("/sp3", SocketHandler(server))
+	// By default serve a demo site.
+	mux.Handle("/client/", http.StripPrefix("/client/", http.FileServer(http.Dir("../client"))))
+
 	webServer := &http.Server{Addr: addr, Handler: mux}
 	webServer.ListenAndServe()
 
