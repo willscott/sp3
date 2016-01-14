@@ -127,7 +127,7 @@ func SocketHandler(server *Server) http.Handler {
 						break
 					}
 				} else {
-					log.Println("Bad Challenge from %s", r.RemoteAddr)
+					log.Println("Bad Challenge from", r.RemoteAddr)
 					resp := ServerMessage{
 						Status: UNAUTHORIZED,
 					}
