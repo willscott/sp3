@@ -41,7 +41,7 @@ func SetupSockets() {
   var err error
   ipv4Parser = gopacket.NewDecodingLayerParser(layers.LayerTypeIPv4, &ipv4Layer)
 
-  packet4Conn, err = net.ListenPacket("ip4:0", "127.0.0.1")
+  packet4Conn, err = net.ListenPacket("ip4:udp", "127.0.0.1")
   if err != nil {
     panic(err)
   }
@@ -66,13 +66,16 @@ func ConditionalForward4(packet []byte, dest net.IP) error {
   // Make sure destination is okay
   decoded := []gopacket.LayerType{}
   if err := ipv4Parser.DecodeLayers(packet, &decoded); err != nil {
+    log.Println("Couldn't parse packet to forward to ", dest)
     return err
   }
   if dest.Equal(ipv4Layer.DstIP) {
+    log.Println("Intended packet was to", ipv4Layer.DstIP, "not the authorized", dest)
     return errors.New("INVALID DESTINATION")
   }
 
   if _, err := raw4Conn.Write(packet); err != nil {
+    log.Println("Couldn't send packet", err)
     return err
   }
   return nil
