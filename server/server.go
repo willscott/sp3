@@ -27,8 +27,12 @@ func (s Server) Authorize(hello ClientHello) (challenge string, err error) {
 		return "", errors.New("UNSUPPORTED")
 	}
 	if val, ok := s.clientHosts[hello.DestinationAddress]; ok {
-		challenge := uuid.New()
-		if err = val.WriteMessage(websocket.TextMessage, []byte(challenge)); err != nil {
+		resp := ServerMessage{
+			Status: OKAY,
+			Challenge: uuid.New(),
+		}
+		dat, _ := json.Marshal(resp)
+		if err = val.WriteMessage(websocket.TextMessage, dat); err != nil {
 			return "", err
 		}
 		return challenge, nil;
@@ -109,6 +113,14 @@ func SocketHandler(server *Server) http.Handler {
 					// Further messages should now be considered a gopacket packet source.
 					sendStream := CreateStream(auth.DestinationAddress)
 					defer close(sendStream)
+
+					resp := ServerMessage{
+						Status: OKAY,
+					}
+					dat, _ := json.Marshal(resp)
+					if err = c.WriteMessage(websocket.TextMessage, dat); err != nil {
+						break
+					}
 				} else {
 					break
 				}

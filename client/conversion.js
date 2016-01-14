@@ -44,6 +44,13 @@ function ascii2hex(ascii) {
     return hex;
   }).join('');
 }
+function hext2AB(hex) {
+  var buf = new Uint8Array(hex.length / 2);
+  for (var i = 0; i < hex.length - 1; i += 2) {
+    buf[i / 2] = parseInt(hex.substr(i, 2), 16);
+  }
+  return buf;
+}
 function identity(value) {
   return value;
 }

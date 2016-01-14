@@ -20,11 +20,44 @@
       fields[8].background = '#cff';
       window.addEventListener('load', function () {
         var editor = new PacketEditor(document.getElementById("packet"), fields, 16);
+        document.getElementById("send").addEventListener("click", doSend, true);
+        document.getElementById("server").value = "ws://" + location.host + "/sp3";
       }, true);
       function externalip(dat) {
         console.log("Learned your IP is " + dat.ip);
+        document.getElementById("destination").value=dat.ip;
         fields[3].value = fields[3].toHex(dat.ip);
         fields[3].onChange();
+      }
+      var connectState = 0;
+      function doSend() {
+        var socket = new WebSocket(document.getElementById("server").value);
+        socket.onmessage = function(msg) {
+          var data = JSON.parse(msg.data);
+          if (data.Status === 0 && connectState === 1) { //okay
+            var ip = document.getElementById("destination").value;
+            socket.send(JSON.serialize({
+              DestinationAddress: ip,
+              Challenge: data.Challenge
+            }));
+            connectState = 2;
+          } else if (data.Status === 0 && connectState === 2) {
+            // Authorized and ready to send.
+            var buf = hext2AB(document.getElementById("packet").value);
+            socket.send(buf.buffer);
+          } else if (data.Status > 1) { //error
+            console.error("Server Error: " + data.Status);
+            return;
+          }
+        };
+        socket.onopen = function () {
+          connectState = 1;
+          var ip = document.getElementById("destination").value;
+          socket.send(JSON.serialize({
+            DestinationAddress: ip,
+            AuthenticationMethod: 0
+          }));
+        };
       }
     </script>
     <script type="text/javascript" src="https://api.ipify.org?format=jsonp&callback=externalip"></script>
@@ -67,9 +100,11 @@
     <section id="demo">
       <h2>Demo</h2>
       <textarea id="packet">4500002914c800004011d00c0a00071c80d00404d7981f900015322f48656c6c6f20576f726c64210a</textarea>
-      <br />
-      <input type="button" value="Reset" />
-      <input type="button" value="Send" />
+      <hr>
+      <label for="destination">Destination:</label><input type="text" id="destination" value="" /><br />
+      <label for="server">SP3 Server:</label><input type="text" id="server" value="ws://localhost:8080" /><br />
+      <input type="reset" value="Reset" />
+      <input id="send" type="button" value="Send" />
     </section>
   </body>
 </html>
