@@ -20,10 +20,10 @@ var (
 )
 
 type Config struct {
-	port int
-	device string
-	src string
-	dst string
+	port int	`json:"port"`
+	device string	`json:"device"`
+	src string `json:"src"`
+	dst string `json:"dst"`
 }
 
 func main() {
@@ -60,6 +60,7 @@ func main() {
 		configHandle.Close()
 	}
 
+
 	configString, err := ioutil.ReadFile(*configFile)
 	if err != nil {
 		log.Fatalf("Couldn't read config file: %s", err)
@@ -78,6 +79,7 @@ func main() {
 		config.device = "eth0"
 	}
 
+  log.Println("Using config", config)
 	fmt.Println("running on port", config.port)
 	NewServer(config)
 }
