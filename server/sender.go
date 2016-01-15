@@ -1,7 +1,6 @@
 package main
 
 import (
-  "encoding/binary"
   "encoding/hex"
   "errors"
 
@@ -71,7 +70,7 @@ func ConditionalForward4(packet []byte, dest net.IP) error {
   if err := ipv4Parser.DecodeLayers(packet, &decoded); len(decoded) != 1 {
     return err
   }
-  if dest.Equal(ipv4Layer.DstIP) {
+  if !dest.Equal(ipv4Layer.DstIP) {
     log.Println("Intended packet was to", ipv4Layer.DstIP, "not the authorized", dest)
     return errors.New("INVALID DESTINATION")
   }
