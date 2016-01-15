@@ -51,7 +51,7 @@ func SetupSockets(config Config) {
   srcBytes, _ := hex.DecodeString(config.Src)
   dstBytes, _ := hex.DecodeString(config.Dst)
   linkHeader = append(dstBytes, srcBytes...)
-  linkHeader = append(linkHeader, 0, 0)
+  linkHeader = append(linkHeader, 0x08, 0) // IPv4 EtherType
 
 //  var ipv6Layer layers.ipv6
 //  ipv6Parser := gopacket.NewDecodingLayerParser(layers.LayerTypeIPv6, &ipv6Layer)
@@ -75,10 +75,6 @@ func ConditionalForward4(packet []byte, dest net.IP) error {
     log.Println("Intended packet was to", ipv4Layer.DstIP, "not the authorized", dest)
     return errors.New("INVALID DESTINATION")
   }
-
-  // Prepend with ethernet header
-  pktlen := uint16(len(packet))
-  binary.BigEndian.PutUint16(linkHeader[12:], pktlen)
 
   if err := handle.WritePacketData(append(linkHeader, packet...)); err != nil {
     log.Println("Couldn't send packet", err)
