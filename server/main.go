@@ -20,10 +20,10 @@ var (
 )
 
 type Config struct {
-	port int	`json:"port"`
-	device string	`json:"device"`
-	src string `json:"src"`
-	dst string `json:"dst"`
+	Port int
+	Device string
+	Src string
+	Dst string
 }
 
 func main() {
@@ -48,10 +48,10 @@ func main() {
 			return
 		}
 		defaultConfig, _ := json.Marshal(Config{
-			port: *port,
-			device: *device,
-			src: *srcMAC,
-			dst: *dstMAC,
+			Port: *port,
+			Device: *device,
+			Src: *srcMAC,
+			Dst: *dstMAC,
 		})
 		if _, err := configHandle.Write(defaultConfig); err != nil {
 			log.Fatalf("Failed to write default config: %s", err)
@@ -66,20 +66,20 @@ func main() {
 		log.Fatalf("Couldn't read config file: %s", err)
 		return
 	}
-	config := Config{}
+
+  var config Config
 	if err := json.Unmarshal(configString, &config); err != nil {
 		log.Fatalf("Couldn't parse config: %s", err)
 		return
 	}
 
-	if config.port == 0 {
-		config.port = 8080
+	if config.Port == 0 {
+		config.Port = 8080
 	}
-	if config.device == "" {
-		config.device = "eth0"
+	if config.Device == "" {
+		config.Device = "eth0"
 	}
 
   log.Println("Using config", config)
-	fmt.Println("running on port", config.port)
 	NewServer(config)
 }

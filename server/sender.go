@@ -43,13 +43,13 @@ func SetupSockets(config Config) {
   var err error
   ipv4Parser = gopacket.NewDecodingLayerParser(layers.LayerTypeIPv4, &ipv4Layer)
 
-  handle, err = pcap.OpenLive(config.device, 1024, false, 30 * time.Second)
+  handle, err = pcap.OpenLive(config.Device, 1024, false, 30 * time.Second)
   if err != nil {
     panic(err)
   }
 
-  srcBytes, _ := hex.DecodeString(config.src)
-  dstBytes, _ := hex.DecodeString(config.dst)
+  srcBytes, _ := hex.DecodeString(config.Src)
+  dstBytes, _ := hex.DecodeString(config.Dst)
   linkHeader := append(dstBytes, srcBytes...)
   linkHeader = append(linkHeader, 0, 0)
   log.Println("Link Header length", len(linkHeader))

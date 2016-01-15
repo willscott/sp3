@@ -155,7 +155,7 @@ func NewServer(conf Config) *Server {
 		clientHosts: make(map[string]*websocket.Conn),
 	}
 
-	addr := fmt.Sprintf("0.0.0.0:%d", conf.port)
+	addr := fmt.Sprintf("0.0.0.0:%d", conf.Port)
 	mux := http.NewServeMux()
 	mux.Handle("/sp3", SocketHandler(server))
 	// By default serve a demo site.
