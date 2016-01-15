@@ -80,6 +80,6 @@ func main() {
 		config.Device = "eth0"
 	}
 
-  fmt.Println("Using config %+v", config)
+  fmt.Printf("Using config %+v \n", config)
 	NewServer(config)
 }

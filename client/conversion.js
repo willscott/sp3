@@ -67,7 +67,7 @@ function ipChecksum(packet) {
   return onesComplement(header);
 }
 function udpLength(packet) {
-  return pad((packet.length / 2 - 40).toString(16));
+  return pad((packet.length / 2 - 20).toString(16));
 }
 function udpChecksum(packet) {
   var header =
