@@ -24,7 +24,6 @@
         document.getElementById("server").value = "ws://" + location.host + "/sp3";
       }, true);
       function externalip(dat) {
-        console.log("Learned your IP is " + dat.ip);
         document.getElementById("destination").value=dat.ip;
         fields[3].value = fields[3].toHex(dat.ip);
         fields[3].onChange();
@@ -62,7 +61,6 @@
         };
       }
     </script>
-    <script type="text/javascript" src="/ip.js"></script>
     <style type="text/css">
     .editorLine {
       display:block;
@@ -108,5 +106,6 @@
       <input type="reset" value="Reset" />
       <input id="send" type="button" value="Send" />
     </section>
+    <script async type="text/javascript" src="/ip.js"></script>
   </body>
 </html>

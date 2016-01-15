@@ -55,7 +55,7 @@ function identity(value) {
   return value;
 }
 function totalLength(packet) {
-  return pad(packet.length.toString(16));
+  return pad((packet.length / 2).toString(16));
 }
 function ipChecksum(packet) {
   var header = packet.substr(0, 40);
@@ -67,7 +67,7 @@ function ipChecksum(packet) {
   return onesComplement(header);
 }
 function udpLength(packet) {
-  return pad((packet.length - 40).toString(16));
+  return pad((packet.length / 2 - 40).toString(16));
 }
 function udpChecksum(packet) {
   var header =
