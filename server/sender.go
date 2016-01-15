@@ -3,6 +3,7 @@ package main
 import (
   "encoding/hex"
   "errors"
+  "fmt"
 
   "github.com/google/gopacket"
   "github.com/google/gopacket/layers"
@@ -79,6 +80,7 @@ func ConditionalForward4(packet []byte, dest net.IP) error {
     log.Println("Couldn't send packet", err)
     return err
   }
+  fmt.Println("%d bytes sent to %v", dest, len(packet))
   return nil
 }
 
