@@ -116,7 +116,7 @@ func SocketHandler(server *Server) http.Handler {
 				if challenge != "" && challenge == auth.Challenge {
 					senderState = AUTHORIZED
 					// Further messages should now be considered a gopacket packet source.
-					sendStream := CreateStream(auth.DestinationAddress)
+					sendStream = CreateStream(server.config, auth.DestinationAddress)
 					defer close(sendStream)
 
 					resp := ServerMessage{

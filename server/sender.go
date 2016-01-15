@@ -1,20 +1,22 @@
 package main
 
 import (
+  "encoding/binary"
+  "encoding/hex"
   "errors"
 
   "github.com/google/gopacket"
   "github.com/google/gopacket/layers"
+  "github.com/google/gopacket/pcap"
 
-  "golang.org/x/net/ipv4"
-//  "golang.org/x/net/ipv6"
-
+  "log"
   "net"
+  "time"
 )
 
-func CreateStream(destination string) chan []byte {
-  if packet4Conn == nil {
-    SetupSockets()
+func CreateStream(config Config, destination string) chan []byte {
+  if handle == nil {
+    SetupSockets(config)
   }
 
   dest := net.ParseIP(destination)
@@ -31,24 +33,25 @@ func HandleStream(dest net.IP, que chan []byte) {
 }
 
 var (
-  packet4Conn net.PacketConn
-  raw4Conn *ipv4.RawConn
+  handle *pcap.Handle
   ipv4Layer layers.IPv4
   ipv4Parser *gopacket.DecodingLayerParser
+  linkHeader *[]byte
 )
 
-func SetupSockets() {
+func SetupSockets(config Config) {
   var err error
   ipv4Parser = gopacket.NewDecodingLayerParser(layers.LayerTypeIPv4, &ipv4Layer)
 
-  packet4Conn, err = net.ListenPacket("ip4:udp", "127.0.0.1")
+  handle, err = pcap.OpenLive(config.device, 1024, false, 30 * time.Second)
   if err != nil {
     panic(err)
   }
-  raw4Conn, err = ipv4.NewRawConn(packet4Conn)
-  if err != nil {
-    panic(err)
-  }
+
+  srcBytes, _ := hex.DecodeString(config.src)
+  dstBytes, _ := hex.DecodeString(config.dst)
+  linkHeader := append(dstBytes, srcBytes...)
+  linkHeader = append(linkHeader, 0, 0)
 
 //  var ipv6Layer layers.ipv6
 //  ipv6Parser := gopacket.NewDecodingLayerParser(layers.LayerTypeIPv6, &ipv6Layer)
@@ -65,8 +68,7 @@ func ConditionalForward(packet []byte, dest net.IP) error {
 func ConditionalForward4(packet []byte, dest net.IP) error {
   // Make sure destination is okay
   decoded := []gopacket.LayerType{}
-  if err := ipv4Parser.DecodeLayers(packet, &decoded); err != nil {
-    log.Println("Couldn't parse packet to forward to ", dest)
+  if err := ipv4Parser.DecodeLayers(packet, &decoded); len(decoded) != 1 {
     return err
   }
   if dest.Equal(ipv4Layer.DstIP) {
@@ -74,7 +76,11 @@ func ConditionalForward4(packet []byte, dest net.IP) error {
     return errors.New("INVALID DESTINATION")
   }
 
-  if _, err := raw4Conn.Write(packet); err != nil {
+  // Prepend with ethernet header
+  pktlen := uint16(len(packet))
+  binary.BigEndian.PutUint16((*linkHeader)[12:], pktlen)
+
+  if err := handle.WritePacketData(append(*linkHeader, packet...)); err != nil {
     log.Println("Couldn't send packet", err)
     return err
   }
