@@ -63,7 +63,7 @@ func (s Server) Cleanup(remoteAddr string) {
 
 func IPHandler(server *Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		addrHost, _, err := net.SplitHostPort(r.RemoteAddr)
+		addrHost, _, _ := net.SplitHostPort(r.RemoteAddr)
 		fmt.Fprintf(w, "externalip({ip:\"%s\"})", addrHost)
 	});
 }
