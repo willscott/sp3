@@ -61,6 +61,13 @@ func (s Server) Cleanup(remoteAddr string) {
 	}
 }
 
+func IPHandler(server *Server) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		addrHost, _, err := net.SplitHostPort(r.RemoteAddr)
+		fmt.Fprintf(w, "externalip({ip:\"%s\"})", addrHost)
+	});
+}
+
 func SocketHandler(server *Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := server.upgrader.Upgrade(w, r, nil)
@@ -160,6 +167,7 @@ func NewServer(conf Config) *Server {
 	mux.Handle("/sp3", SocketHandler(server))
 	// By default serve a demo site.
 	mux.Handle("/client/", http.StripPrefix("/client/", http.FileServer(http.Dir("../client"))))
+	mux.Handle("/ip.js", IPHandler(server))
 
 	webServer := &http.Server{Addr: addr, Handler: mux}
 	webServer.ListenAndServe()
