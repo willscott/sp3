@@ -36,7 +36,7 @@ var (
   handle *pcap.Handle
   ipv4Layer layers.IPv4
   ipv4Parser *gopacket.DecodingLayerParser
-  linkHeader *[]byte
+  linkHeader []byte
 )
 
 func SetupSockets(config Config) {
@@ -52,6 +52,7 @@ func SetupSockets(config Config) {
   dstBytes, _ := hex.DecodeString(config.dst)
   linkHeader := append(dstBytes, srcBytes...)
   linkHeader = append(linkHeader, 0, 0)
+  log.Println("Link Header length", len(linkHeader))
 
 //  var ipv6Layer layers.ipv6
 //  ipv6Parser := gopacket.NewDecodingLayerParser(layers.LayerTypeIPv6, &ipv6Layer)
@@ -78,9 +79,9 @@ func ConditionalForward4(packet []byte, dest net.IP) error {
 
   // Prepend with ethernet header
   pktlen := uint16(len(packet))
-  binary.BigEndian.PutUint16((*linkHeader)[12:], pktlen)
+  binary.BigEndian.PutUint16(linkHeader[12:], pktlen)
 
-  if err := handle.WritePacketData(append(*linkHeader, packet...)); err != nil {
+  if err := handle.WritePacketData(append(linkHeader, packet...)); err != nil {
     log.Println("Couldn't send packet", err)
     return err
   }
