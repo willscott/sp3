@@ -50,9 +50,8 @@ func SetupSockets(config Config) {
 
   srcBytes, _ := hex.DecodeString(config.Src)
   dstBytes, _ := hex.DecodeString(config.Dst)
-  linkHeader := append(dstBytes, srcBytes...)
+  linkHeader = append(dstBytes, srcBytes...)
   linkHeader = append(linkHeader, 0, 0)
-  log.Println("Link Header length", len(linkHeader))
 
 //  var ipv6Layer layers.ipv6
 //  ipv6Parser := gopacket.NewDecodingLayerParser(layers.LayerTypeIPv6, &ipv6Layer)
