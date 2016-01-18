@@ -80,7 +80,7 @@ func ConditionalForward4(packet []byte, dest net.IP) error {
     log.Println("Couldn't send packet", err)
     return err
   }
-  log.Println(fmt.Sprintf("%d bytes sent to %v\n", dest, len(packet)))
+  log.Println(fmt.Sprintf("%d bytes sent to %v\n", len(packet), dest))
   return nil
 }
 
