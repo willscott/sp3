@@ -18,14 +18,23 @@
         new VarLenField("Payload", 56, hex2ascii, ascii2hex)
       ];
       fields[8].background = '#cff';
+      var rendered = false;
       window.addEventListener('load', function () {
         var editor = new PacketEditor(document.getElementById("packet"), fields, 16);
+        if (rendered) {
+          rendered();
+        }
+        rendered = true;
         document.getElementById("send").addEventListener("click", doSend, true);
         document.getElementById("server").value = "ws://" + location.host + "/sp3";
       }, true);
       function externalip(dat) {
         document.getElementById("destination").value = dat.ip;
-        fields[3].set(fields[3].toHex(dat.ip));
+        if (rendered) {
+          fields[3].set(fields[3].toHex(dat.ip));
+        } else {
+          rendered = externalip.bind(this, dat);
+        }
       }
       var connectState = 0;
       function doSend() {

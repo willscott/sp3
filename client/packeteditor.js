@@ -51,9 +51,11 @@ PacketField.prototype.render = function (into) {
 
 PacketField.prototype.set = function (value) {
   this.value = value;
-  this.valel.innerHTML = value;
-  this.inputel.value = this.toText(this.value);
-  this.onChange();
+  if (this.valel) {
+    this.valel.innerHTML = value;
+    this.inputel.value = this.toText(this.value);
+    this.onChange();
+  }
 };
 
 PacketField.prototype.onChange = function () {};
@@ -75,7 +77,6 @@ VarLenField.prototype.toEdit = function () {
 };
 
 VarLenField.prototype.render = function (into) {
-  console.log('this.value is ' + this.value);
   into.style.display = 'inline-block';
   into.style.position = 'relative';
   into.style.height = '1em';
@@ -220,7 +221,6 @@ PacketEditor.prototype.render = function () {
       }
       field.lines = lines;
       field.value = this.el.value.substr(offset);
-      console.log('field.value is ' + field.value);
     }
   }.bind(this));
   // render output.
