@@ -80,6 +80,7 @@ function udpChecksum(packet) {
   }
   return onesComplement(header);
 }
+// Per https://en.wikipedia.org/wiki/IPv4_header_checksum
 function onesComplement(hex) {
   var i;
   while (hex.length > 4) {

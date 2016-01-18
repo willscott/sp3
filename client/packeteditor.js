@@ -17,6 +17,7 @@ PacketField.prototype.render = function (into) {
   var val = document.createElement('span');
   val.innerHTML = this.value;
   into.appendChild(val);
+  this.valel = val;
   var label = document.createElement('span');
   label.style.position = 'absolute';
   label.style.left = 0;
@@ -39,12 +40,20 @@ PacketField.prototype.render = function (into) {
     val.innerHTML = this.value;
   }.bind(this, input, val), true);
   into.appendChild(input);
+  this.inputel = input;
 
   val.addEventListener('click', function (input) {
     this.style.display = 'none';
     input.style.display = 'block';
     input.focus();
   }.bind(val, input), true);
+};
+
+PacketField.prototype.set = function (value) {
+  this.value = value;
+  this.valel.innerHTML = value;
+  this.inputel.value = this.toText(this.value);
+  this.onChange();
 };
 
 PacketField.prototype.onChange = function () {};

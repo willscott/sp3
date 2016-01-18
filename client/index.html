@@ -24,9 +24,8 @@
         document.getElementById("server").value = "ws://" + location.host + "/sp3";
       }, true);
       function externalip(dat) {
-        document.getElementById("destination").value=dat.ip;
-        fields[3].value = fields[3].toHex(dat.ip);
-        fields[3].onChange();
+        document.getElementById("destination").value = dat.ip;
+        fields[3].set(fields[3].toHex(dat.ip));
       }
       var connectState = 0;
       function doSend() {
