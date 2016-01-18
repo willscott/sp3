@@ -58,12 +58,8 @@ function totalLength(packet) {
   return pad((packet.length / 2).toString(16));
 }
 function ipChecksum(packet) {
-  var header = packet.substr(0, 40);
   //checksum is 0 during recalculation
-  header[20] = '0';
-  header[21] = '0';
-  header[22] = '0';
-  header[23] = '0';
+  var header = packet.substr(0, 20) + '0000' + packet.substr(24, 16);
   return onesComplement(header);
 }
 function udpLength(packet) {
@@ -92,6 +88,9 @@ function onesComplement(hex) {
       sum += parseInt(hex.substr(i, 4), 16);
     }
     hex = sum.toString(16);
+    while (hex.length % 4 !== 0) {
+      hex = '0' + hex;
+    }
   }
   var binary = parseInt(hex, 16).toString(2);
   while (binary.length < 16) {
