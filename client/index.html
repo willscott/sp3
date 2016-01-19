@@ -83,42 +83,42 @@
       <h3>A Simple, Practical, and Safe Packet Spoofing Protocol</h3>
     </header>
     <section>
-      SP3 provides a mechanism through which a server which has the capability to
-      spoof packets can offer that capability in a limited capacity. In particular,
-      the protocol supports spoofing packets as long as the destination <code>client</code>
-      consents in advance to receive those communications.
+      SP3 lets you send spoofed packets, even though your machine probably can't
+      do that itself. Since that can be a bit dangerous, sp<sup>3</sup> is a protocol which
+      only will send spoofed packets when the destination <code>client</code>
+      says in advance that it wants to receive them.
     </section>
     <section>
       <h2>Learn</h2>
       <p>
         The SP<sup>3</sup> code lives on <a href="https://github.com/willscott/sp3">github</a>.
-        In particular, the readme explains the design of the server, and
+        The readme explains the design of the system, and
         <a href="https://github.com/willscott/sp3/blob/master/doc/PROTOCOL.md">protocol.md</a>
-        explains the wire protocol used to send your own packets.
+        describes the wire protocol for integrating sp<sup>3</sup> into your own application.
       </p>
     </section>
     <section>
       <h2>Demo</h2>
       <p>
-        This demo allows you to send packets to yourself from any spoofed source.
-        It triggers our referece SP<sup>3</sup> server to send you a simple UDP
-        message, which you can see if you have a publically facing machine.
+        This demo allows you to send packets to yourself from an arbitrary source.
+        It uses our reference SP<sup>3</sup> server to send you a simple UDP
+        message, which you can see if you have a publicly facing machine.
       </p>
       <p style="color:red">
-        Note: The basic demonstration of this capability does not handle NAT
-        translations, and will only work if your machine has a publically
-        accessible IP address.
+        Note: This demo probably won't go through NAT boxes. It will only
+        work if your machine has its own public IPv4 Address.
       </p>
       <p>
-        To see the packet, choose a port and listen for incoming traffic, using e.g.
+        To see the packet, choose a port and listen for incoming traffic. You can
+        do this with netcat on linux by invoking:
         <code>
           nc -u -l 8080
         </code>.
-        The packet below is being sent to the remote IP we detected when you visited
+        The packet below will be sent to the remote IP we detected when you visited
         this page. You can change it though as long as the destination also has a
-        connection open to our server - for intricacies of the protcol, look at the
+        connection open to our server - for the intricacies of the protcol, look at the
         protocol.md link above. When you send the packet, you will hopefully see the
-        payload output in your netcat listener.
+        contents, 'Hello World', output on your terminal.
       </p>
     </section>
     <section id="demo">
