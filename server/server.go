@@ -68,6 +68,7 @@ func IPHandler(server *Server) http.Handler {
 	});
 }
 
+
 func SocketHandler(server *Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := server.upgrader.Upgrade(w, r, nil)
@@ -168,6 +169,9 @@ func NewServer(conf Config) *Server {
 	// By default serve a demo site.
 	mux.Handle("/client/", http.StripPrefix("/client/", http.FileServer(http.Dir("../client"))))
 	mux.Handle("/ip.js", IPHandler(server))
+	mux.handle("/", http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/client/", 301)
+	}))
 
 	webServer := &http.Server{Addr: addr, Handler: mux}
 	webServer.ListenAndServe()

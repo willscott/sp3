@@ -83,11 +83,26 @@
       <h3>A Simple, Practical, and Safe Packet Spoofing Protocol</h3>
     </header>
     <section>
-      <h2>Instructions</h2>
+      SP3 provides a mechanism through which a server which has the capability to
+      spoof packets can offer that capability in a limited capacity. In particular,
+      the protocol supports spoofing packets as long as the destination <code>client</code>
+      consents in advance to receive those communications.
+    </section>
+    <section>
+      <h2>Learn</h2>
       <p>
-        This demo implements a combined Client and Sender. It instructs a
-        remote SP<sup>3</sup> server to send it an arbitrarily crafted UDP
-        packet as a demonstration of the protocol.
+        The SP<sup>3</sup> code lives on <a href="https://github.com/willscott/sp3">github</a>.
+        In particular, the readme explains the design of the server, and
+        <a href="https://github.com/willscott/sp3/blob/master/doc/PROTOCOL.md">protocol.md</a>
+        explains the wire protocol used to send your own packets.
+      </p>
+    </section>
+    <section>
+      <h2>Demo</h2>
+      <p>
+        This demo allows you to send packets to yourself from any spoofed source.
+        It triggers our referece SP<sup>3</sup> server to send you a simple UDP
+        message, which you can see if you have a publically facing machine.
       </p>
       <p style="color:red">
         Note: The basic demonstration of this capability does not handle NAT
@@ -95,22 +110,23 @@
         accessible IP address.
       </p>
       <p>
-        First, choose a port, and listen for incoming traffic, using e.g.
+        To see the packet, choose a port and listen for incoming traffic, using e.g.
         <code>
           nc -u -l 8080
         </code>.
-        Next, verify the packet to be sent below has the expected host, and
-        port automatically detected, and make other desired changes.
-        Finally, send the packet, and if all goes well the payload will be
-        displayed by netcat.
+        The packet below is being sent to the remote IP we detected when you visited
+        this page. You can change it though as long as the destination also has a
+        connection open to our server - for intricacies of the protcol, look at the
+        protocol.md link above. When you send the packet, you will hopefully see the
+        payload output in your netcat listener.
       </p>
     </section>
     <section id="demo">
-      <h2>Demo</h2>
+      <h2>Packet to Spoof</h2>
       <textarea id="packet">4500002914c800004011d00c0a00071c80d00404d7981f900015322f48656c6c6f20576f726c64210a</textarea>
       <hr>
-      <label for="destination">Destination:</label><input type="text" id="destination" value="" /><br />
-      <label for="server">SP3 Server:</label><input type="text" id="server" value="ws://localhost:8080" /><br />
+      <label for="destination">Destination to request access to:</label><input type="text" id="destination" value="" /><br />
+      <label for="server">SP<sup>3</sup> Server:</label><input type="text" id="server" value="ws://localhost:8080" /><br />
       <input type="reset" value="Reset" />
       <input id="send" type="button" value="Send" />
     </section>
