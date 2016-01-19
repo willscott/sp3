@@ -8,6 +8,29 @@ spoof packets can offer that capability in a limited capacity. In particular,
 the protocol supports spoofing packets as long as the destination `client`
 consents in advance to receive those communications.
 
+Why?
+-----
+
+There are several uses of SP^3 we've thought of, and we're sure there are many
+more.
+
+* NAT hole-punching facilitation.
+    Currently, NAT holepunching only works for UDP, partially because even
+    when the clients are controlled, it generally requires root permissions
+    to send packets with a specific sequence number.  Having a source of
+    packet injection can provide a mechanism to synchronize sequence numbers
+    and create TCP connections between two NAT'ed machines.
+
+* Firewall characterization.
+    It's often difficult to test how your network will respond to packets sent
+    from black-holed or unadvertised prefixes. A source of packets can allow you
+    to validate firewall rules and routing policy.
+
+* Circumvention.
+    The ability to send packets from arbitrary sources can help to mask traffic
+    by adding a layer of cover trafic and IP diversity that makes surveilance
+    much more difficult.
+
 Design
 -----
 
