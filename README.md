@@ -1,7 +1,7 @@
 (SP)^3: A Simple Practical & Safe Packet Spoofing Protocol
 ======
 
-Install: `go get github.com/willscott/sp3`
+Install an SP^3 Server: `go get github.com/willscott/sp3`
 
 SP3 provides a mechanism through which a server which has the capability to
 spoof packets can offer that capability in a limited capacity. In particular,

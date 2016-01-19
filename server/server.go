@@ -169,7 +169,7 @@ func NewServer(conf Config) *Server {
 	// By default serve a demo site.
 	mux.Handle("/client/", http.StripPrefix("/client/", http.FileServer(http.Dir("../client"))))
 	mux.Handle("/ip.js", IPHandler(server))
-	mux.handle("/", http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/", http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/client/", 301)
 	}))
 
