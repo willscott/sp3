@@ -54,6 +54,7 @@
             // Authorized and ready to send.
             var buf = hext2AB(document.getElementById("packet").value);
             socket.send(buf.buffer);
+            socket.close();
           } else if (data.Status > 0) { //error
             console.error("Server Error: " + data.Status);
             return;
