@@ -16,12 +16,12 @@ const (
 
 type State int
 const (
-  CLIENTHELLO State = iota // Waiting for client Hello message.
+  SENDERHELLO State = iota // Waiting for client Hello message.
   HELLORECEIVED
   AUTHORIZED               // Acceptable ClientAuhtorization received.
 )
 
-type ClientHello struct {
+type SenderHello struct {
   DestinationAddress string
   AuthenticationMethod AuthenticationMethod
 }
@@ -32,11 +32,11 @@ type ServerMessage struct {
   Sent []byte
 }
 
-type ClientAuthorization struct {
+type SenderAuthorization struct {
   DestinationAddress string
   Challenge string
 }
 
-type ClientMessage struct {
+type SenderMessage struct {
   Packet []byte
 }

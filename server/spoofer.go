@@ -14,24 +14,6 @@ import (
   "time"
 )
 
-func CreateStream(config Config, destination string) chan []byte {
-  if handle == nil {
-    SetupSockets(config)
-  }
-
-  dest := net.ParseIP(destination)
-  flow := make(chan []byte)
-  go HandleStream(dest, flow)
-  return flow
-}
-
-func HandleStream(dest net.IP, que chan []byte) {
-  for {
-    req := <-que
-    ConditionalForward(req, dest)
-  }
-}
-
 var (
   handle *pcap.Handle
   ipv4Layer layers.IPv4
@@ -39,7 +21,31 @@ var (
   linkHeader []byte
 )
 
-func SetupSockets(config Config) {
+func CreateSpoofedStream(config Config, destination string) chan []byte {
+  if handle == nil {
+    setupSpoofingSocket(config)
+  }
+
+  dest := net.ParseIP(destination)
+  flow := make(chan []byte)
+  go handleSpoofedStream(dest, flow)
+  return flow
+}
+
+func handleSpoofedStream(dest net.IP, que chan []byte) error {
+  if p4 := dest.To4(); len(p4) == net.IPv4len {
+    for {
+      req := <-que
+      if err := spoofIPv4Message(req, dest); err != nil {
+        return err
+      }
+    }
+  } else {
+    return errors.New("UNSUPPORTED")
+  }
+}
+
+func setupSpoofingSocket(config Config) {
   var err error
   ipv4Parser = gopacket.NewDecodingLayerParser(layers.LayerTypeIPv4, &ipv4Layer)
 
@@ -57,15 +63,7 @@ func SetupSockets(config Config) {
 //  ipv6Parser := gopacket.NewDecodingLayerParser(layers.LayerTypeIPv6, &ipv6Layer)
 }
 
-func ConditionalForward(packet []byte, dest net.IP) error {
-  if p4 := dest.To4(); len(p4) == net.IPv4len {
-    return ConditionalForward4(packet, dest)
-  } else {
-    return ConditionalForward6(packet, dest)
-  }
-}
-
-func ConditionalForward4(packet []byte, dest net.IP) error {
+func spoofIPv4Message(packet []byte, dest net.IP) error {
   // Make sure destination is okay
   decoded := []gopacket.LayerType{}
   if err := ipv4Parser.DecodeLayers(packet, &decoded); len(decoded) != 1 {
@@ -82,8 +80,4 @@ func ConditionalForward4(packet []byte, dest net.IP) error {
   }
   log.Println(fmt.Sprintf("%d bytes sent to %v", len(packet), dest))
   return nil
-}
-
-func ConditionalForward6(packet []byte, dest net.IP) error {
-  return errors.New("UNSUPPORTED")
 }

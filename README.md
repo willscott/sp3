@@ -41,24 +41,25 @@ even when their source address is spoofed.  The `client` is the destination that
 receives the packets. The `sender` is the host that generates the packets.
 
 One issue with packet spoofing is the number of attack vectors it opens. In order
-to provide a service that makes a reasonable tradeoff of enabling valid use
+to provide a service that makes a reasonable trade-off between enabling valid use
 cases while not opening itself up to abuse and attacks, the `server` enforces
 a policy on packets it is willing to send.  The primary property the `server`
 attempts to guarantee is that the `client` consents to receiving spoofed packets.
 
 The server provides a number of mechanisms by which the client can provide this
 consent. The simplest is that the client establishes a connection to the server,
-and directly tells the server it is wiling to receive the spoofed packets.  This
-can be done either through a direct TCP connection, or with a web-socket connection
-when the `client` is code running in a web browser. Other methods for when the
-client cannot or is unwilling to establish a direct connection to the server are
-more complex and explained in the documentation.
+and directly tells the server it is wiling to receive traffic.  This
+is done with a web-socket based connection, and supports a `client` running in a
+web browser. When the client cannot or is unwilling to establish a direct
+connection to the server, it can generate a *proof-of-ownership* for the sender
+to prove its location and intent without direct communication to the server.
 
 Server
 ------
 
 Build:
 ```bash
+apt-get install libpcapdev
 cd server
 go build
 ```

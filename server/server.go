@@ -22,7 +22,7 @@ type Server struct {
   clientHosts map[string]*websocket.Conn
 }
 
-func (s Server) Authorize(hello ClientHello) (challenge string, err error) {
+func (s Server) Authorize(hello SenderHello) (challenge string, err error) {
 	if (hello.AuthenticationMethod != WEBSOCKET) {
 		return "", errors.New("UNSUPPORTED")
 	}
@@ -82,7 +82,7 @@ func SocketHandler(server *Server) http.Handler {
 		if _, ok := server.clientHosts[addrHost]; !ok {
 			server.clientHosts[addrHost] = c
 		}
-		senderState := CLIENTHELLO
+		senderState := SENDERHELLO
 		var sendStream chan<- []byte
 		challenge := ""
 
@@ -93,8 +93,8 @@ func SocketHandler(server *Server) http.Handler {
 				log.Println("read err:", err)
 				break
 			}
-			if (senderState == CLIENTHELLO && msgType == websocket.TextMessage) {
-				hello := ClientHello{}
+			if (senderState == SENDERHELLO && msgType == websocket.TextMessage) {
+				hello := SenderHello{}
 				err := json.Unmarshal(msg, &hello)
 				if err != nil {
 					log.Println("Hello err:", err)
@@ -115,7 +115,7 @@ func SocketHandler(server *Server) http.Handler {
 				senderState = HELLORECEIVED
 				continue
 			} else if (senderState == HELLORECEIVED && msgType == websocket.TextMessage) {
-				auth := ClientAuthorization{}
+				auth := SenderAuthorization{}
 				err := json.Unmarshal(msg, &auth)
 				if err != nil {
 					log.Println("Auth err:", err)
@@ -123,8 +123,8 @@ func SocketHandler(server *Server) http.Handler {
 				}
 				if challenge != "" && challenge == auth.Challenge {
 					senderState = AUTHORIZED
-					// Further messages should now be considered a gopacket packet source.
-					sendStream = CreateStream(server.config, auth.DestinationAddress)
+					// Further messages should now be considered as binary packets.
+					sendStream = CreateSpoofedStream(server.config, auth.DestinationAddress)
 					defer close(sendStream)
 
 					resp := ServerMessage{
