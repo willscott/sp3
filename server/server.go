@@ -75,6 +75,7 @@ func SocketHandler(server *Server) http.Handler {
 		if err != nil {
 			return
 		}
+		defer c.Close()
 		addrHost, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
 			return
@@ -124,7 +125,7 @@ func SocketHandler(server *Server) http.Handler {
 				if challenge != "" && challenge == auth.Challenge {
 					senderState = AUTHORIZED
 					// Further messages should now be considered as binary packets.
-					sendStream = CreateSpoofedStream(server.config, auth.DestinationAddress)
+					sendStream = CreateSpoofedStream(server.config, r.RemoteAddr, auth.DestinationAddress)
 					defer close(sendStream)
 
 					resp := ServerMessage{

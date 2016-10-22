@@ -21,22 +21,23 @@ var (
   linkHeader []byte
 )
 
-func CreateSpoofedStream(config Config, destination string) chan []byte {
+func CreateSpoofedStream(config Config, source string, destination string) chan []byte {
   if handle == nil {
     setupSpoofingSocket(config)
   }
 
   dest := net.ParseIP(destination)
+  src := net.ParseIP(source)
   flow := make(chan []byte)
-  go handleSpoofedStream(dest, flow)
+  go handleSpoofedStream(src, dest, flow)
   return flow
 }
 
-func handleSpoofedStream(dest net.IP, que chan []byte) error {
+func handleSpoofedStream(src net.IP, dest net.IP, que chan []byte) error {
   if p4 := dest.To4(); len(p4) == net.IPv4len {
     for {
       req := <-que
-      if err := spoofIPv4Message(req, dest); err != nil {
+      if err := spoofIPv4Message(req, src, dest); err != nil {
         return err
       }
     }
@@ -63,7 +64,7 @@ func setupSpoofingSocket(config Config) {
 //  ipv6Parser := gopacket.NewDecodingLayerParser(layers.LayerTypeIPv6, &ipv6Layer)
 }
 
-func spoofIPv4Message(packet []byte, dest net.IP) error {
+func spoofIPv4Message(packet []byte, realSrc net.IP, dest net.IP) error {
   // Make sure destination is okay
   decoded := []gopacket.LayerType{}
   if err := ipv4Parser.DecodeLayers(packet, &decoded); len(decoded) != 1 {
@@ -78,6 +79,6 @@ func spoofIPv4Message(packet []byte, dest net.IP) error {
     log.Println("Couldn't send packet", err)
     return err
   }
-  log.Println(fmt.Sprintf("%d bytes sent to %v", len(packet), dest))
+  log.Println(fmt.Sprintf("%d bytes sent to %v as %v from %v", len(packet), dest, ipv4Layer.SrcIP, realSrc))
   return nil
 }
