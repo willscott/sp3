@@ -41,6 +41,7 @@ Mechanisms
 
 * Listening Socket
 * Web Notary
+* Path Reflection
 
 Listening Socket
 ----------------
@@ -71,3 +72,14 @@ separately. It is worth noting that the notary service can be provided through
 several cloud-fronting services to prevent easy identification of the service,
 since many cloud providers will pass the original client IP address back to
 the customer service within their cloud.
+
+Request Reflection
+------------------
+
+A variety of HTTP servers can be used to prove a client's IP address without
+direct communication between the client and an SP^3 server. In this scheme,
+the client establishes a TCP connection with an HTTP server, and then leaks
+the full state of that connection to the SP^3 server via the relay. The
+server will then spoof a packet on the active connection making an HTTP
+request, and the client can learn the nonce by extracting it from the the
+response it receives from the web server.
