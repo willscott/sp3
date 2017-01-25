@@ -20,10 +20,10 @@ var (
 )
 
 type Config struct {
-	Port int
+	Port   int
 	Device string
-	Src string
-	Dst string
+	Src    string
+	Dst    string
 }
 
 func main() {
@@ -48,10 +48,10 @@ func main() {
 			return
 		}
 		defaultConfig, _ := json.Marshal(Config{
-			Port: *port,
+			Port:   *port,
 			Device: *device,
-			Src: *srcMAC,
-			Dst: *dstMAC,
+			Src:    *srcMAC,
+			Dst:    *dstMAC,
 		})
 		if _, err := configHandle.Write(defaultConfig); err != nil {
 			log.Fatalf("Failed to write default config: %s", err)
@@ -60,14 +60,13 @@ func main() {
 		configHandle.Close()
 	}
 
-
 	configString, err := ioutil.ReadFile(*configFile)
 	if err != nil {
 		log.Fatalf("Couldn't read config file: %s", err)
 		return
 	}
 
-  var config Config
+	var config Config
 	if err := json.Unmarshal(configString, &config); err != nil {
 		log.Fatalf("Couldn't parse config: %s", err)
 		return
@@ -80,6 +79,10 @@ func main() {
 		config.Device = "eth0"
 	}
 
-  fmt.Printf("Using config %+v \n", config)
+	fmt.Printf("Using config %+v \n", config)
+	if err = SetupSpoofingSockets(config); err != nil {
+		log.Fatalf("Could not initialize sockets: %s", err)
+		return
+	}
 	NewServer(config)
 }

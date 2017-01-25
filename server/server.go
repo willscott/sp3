@@ -15,30 +15,40 @@ import (
 
 type Server struct {
 	sync.Mutex
-	upgrader websocket.Upgrader
-	webServer http.Server
-	config Config
+	upgrader     websocket.Upgrader
+	webServer    http.Server
+	config       Config
 	destinations map[string]*websocket.Conn
-  clientHosts map[string]*websocket.Conn
+	clientHosts  map[string]*websocket.Conn
 }
 
 func (s Server) Authorize(hello SenderHello) (challenge string, err error) {
-	if (hello.AuthenticationMethod != WEBSOCKET) {
+	if hello.AuthenticationMethod == PATHREFLECTION {
+		state = &PathReflectionState{}
+		if err = json.Unmarshal(hello.AuthenticationOptions, state); err != nil {
+			return nil, err
+		}
+		if !PathReflectionServerTrusted(state) {
+			return nil, errors.New("Untrusted Server")
+		}
+		return SendPathReflectionChallenge(state)
+	} else if hello.AuthenticationMethod == WEBSOCKET {
+		if val, ok := s.clientHosts[hello.DestinationAddress]; ok {
+			resp := ServerMessage{
+				Status:    OKAY,
+				Challenge: uuid.New(),
+			}
+			dat, _ := json.Marshal(resp)
+			if err = val.WriteMessage(websocket.TextMessage, dat); err != nil {
+				return "", err
+			}
+			return resp.Challenge, nil
+		}
+
+		return "", errors.New("No active connection from requested destination.")
+	} else {
 		return "", errors.New("UNSUPPORTED")
 	}
-	if val, ok := s.clientHosts[hello.DestinationAddress]; ok {
-		resp := ServerMessage{
-			Status: OKAY,
-			Challenge: uuid.New(),
-		}
-		dat, _ := json.Marshal(resp)
-		if err = val.WriteMessage(websocket.TextMessage, dat); err != nil {
-			return "", err
-		}
-		return resp.Challenge, nil;
-	}
-
-	return "", errors.New("No active connection from requested destination.")
 }
 
 func (s Server) Cleanup(remoteAddr string) {
@@ -65,9 +75,8 @@ func IPHandler(server *Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		addrHost, _, _ := net.SplitHostPort(r.RemoteAddr)
 		fmt.Fprintf(w, "externalip({ip:\"%s\"})", addrHost)
-	});
+	})
 }
-
 
 func SocketHandler(server *Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +103,7 @@ func SocketHandler(server *Server) http.Handler {
 				log.Println("read err:", err)
 				break
 			}
-			if (senderState == SENDERHELLO && msgType == websocket.TextMessage) {
+			if senderState == SENDERHELLO && msgType == websocket.TextMessage {
 				hello := SenderHello{}
 				err := json.Unmarshal(msg, &hello)
 				if err != nil {
@@ -102,7 +111,7 @@ func SocketHandler(server *Server) http.Handler {
 					break
 				}
 
-				chal, err := server.Authorize(hello);
+				chal, err := server.Authorize(hello)
 				if err != nil {
 					log.Println("Authorize err:", err)
 					resp := ServerMessage{
@@ -115,7 +124,7 @@ func SocketHandler(server *Server) http.Handler {
 				challenge = chal
 				senderState = HELLORECEIVED
 				continue
-			} else if (senderState == HELLORECEIVED && msgType == websocket.TextMessage) {
+			} else if senderState == HELLORECEIVED && msgType == websocket.TextMessage {
 				auth := SenderAuthorization{}
 				err := json.Unmarshal(msg, &auth)
 				if err != nil {
@@ -125,7 +134,7 @@ func SocketHandler(server *Server) http.Handler {
 				if challenge != "" && challenge == auth.Challenge {
 					senderState = AUTHORIZED
 					// Further messages should now be considered as binary packets.
-					sendStream = CreateSpoofedStream(server.config, r.RemoteAddr, auth.DestinationAddress)
+					sendStream = CreateSpoofedStream(r.RemoteAddr, auth.DestinationAddress)
 					defer close(sendStream)
 
 					resp := ServerMessage{
@@ -145,7 +154,7 @@ func SocketHandler(server *Server) http.Handler {
 					break
 				}
 				continue
-			} else if (senderState == AUTHORIZED && msgType == websocket.BinaryMessage) {
+			} else if senderState == AUTHORIZED && msgType == websocket.BinaryMessage {
 				// Main forwarding loop.
 				sendStream <- msg
 				continue
@@ -159,9 +168,9 @@ func SocketHandler(server *Server) http.Handler {
 
 func NewServer(conf Config) *Server {
 	server := &Server{
-		config:     conf,
+		config:       conf,
 		destinations: make(map[string]*websocket.Conn),
-		clientHosts: make(map[string]*websocket.Conn),
+		clientHosts:  make(map[string]*websocket.Conn),
 	}
 
 	addr := fmt.Sprintf("0.0.0.0:%d", conf.Port)
@@ -170,7 +179,7 @@ func NewServer(conf Config) *Server {
 	// By default serve a demo site.
 	mux.Handle("/client/", http.StripPrefix("/client/", http.FileServer(http.Dir("../client"))))
 	mux.Handle("/ip.js", IPHandler(server))
-	mux.Handle("/", http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/client/", 301)
 	}))
 
