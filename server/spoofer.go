@@ -11,15 +11,16 @@ import (
 
 	"log"
 	"net"
-	"time"
 )
 
 var (
+	// If TestChannel is set, spoofed packets will be sent to it, rather than to pcap.
+	TestSpoofChannel    chan []byte
 	handle     *pcap.Handle
 	ipv4Layer  layers.IPv4
-	ipv4Parser *gopacket.DecodingLayerParser
 	linkHeader []byte
 )
+var ipv4Parser *gopacket.DecodingLayerParser = gopacket.NewDecodingLayerParser(layers.LayerTypeIPv4, &ipv4Layer)
 
 func CreateSpoofedStream(source string, destination string) chan []byte {
 	dest := net.ParseIP(destination)
@@ -44,7 +45,6 @@ func handleSpoofedStream(src net.IP, dest net.IP, que chan []byte) error {
 
 func SetupSpoofingSockets(config Config) error {
 	var err error
-	ipv4Parser = gopacket.NewDecodingLayerParser(layers.LayerTypeIPv4, &ipv4Layer)
 
 	handle, err = pcap.OpenLive(config.Device, 2048, false, pcap.BlockForever)
 	if err != nil {
@@ -72,6 +72,11 @@ func SpoofIPv4Message(packet []byte, realSrc net.IP, dest net.IP) error {
 	if !dest.Equal(ipv4Layer.DstIP) {
 		log.Println("Intended packet was to", ipv4Layer.DstIP, "not the authorized", dest)
 		return errors.New("INVALID DESTINATION")
+	}
+
+	if TestSpoofChannel != nil {
+		TestSpoofChannel <- packet
+		return nil
 	}
 
 	if err := handle.WritePacketData(append(linkHeader, packet...)); err != nil {

@@ -24,12 +24,12 @@ type Server struct {
 
 func (s Server) Authorize(hello SenderHello) (challenge string, err error) {
 	if hello.AuthenticationMethod == PATHREFLECTION {
-		state = &PathReflectionState{}
+		state := &PathReflectionState{}
 		if err = json.Unmarshal(hello.AuthenticationOptions, state); err != nil {
-			return nil, err
+			return "", err
 		}
 		if !PathReflectionServerTrusted(state) {
-			return nil, errors.New("Untrusted Server")
+			return "", errors.New("Untrusted Server")
 		}
 		return SendPathReflectionChallenge(state)
 	} else if hello.AuthenticationMethod == WEBSOCKET {
