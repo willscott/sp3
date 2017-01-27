@@ -32,12 +32,14 @@ func CreateSpoofedStream(source string, destination string) chan []byte {
 
 func handleSpoofedStream(src net.IP, dest net.IP, que chan []byte) error {
 	if p4 := dest.To4(); len(p4) == net.IPv4len {
-		for {
-			req := <-que
+		for req := range que {
 			if err := SpoofIPv4Message(req, src, dest); err != nil {
+				log.Printf("Could not spoof message [%v->%v]: %v", src, dest, err)
+				close(que)
 				return err
 			}
 		}
+		return nil
 	} else {
 		return errors.New("UNSUPPORTED")
 	}
