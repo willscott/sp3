@@ -3,6 +3,7 @@ package sp3
 import (
 	"errors"
 	"github.com/gorilla/websocket"
+	"log"
 	"net"
 	"net/url"
 	"time"
@@ -15,6 +16,8 @@ func Dial(sp3server url.URL, destination net.IP, auth Authenticator, dialer *web
 	finished := make(chan string)
 	mode, opts, err := auth.Authenticate(finished)
 
+	log.Printf("Authenticate finished. Using mode %d", mode)
+
 	if err != nil {
 		return nil, err
 	}
@@ -24,11 +27,14 @@ func Dial(sp3server url.URL, destination net.IP, auth Authenticator, dialer *web
 	}
 
 	conn := &Sp3Conn{}
+	conn.incomingMessage = make(chan ServerMessage)
 	conn.destination = &net.IPAddr{IP: destination}
 	conn.Conn, _, err = dialer.Dial(sp3server.String(), nil)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("Web Socket connection established with server.")
 
 	// Send SenderHello.
 	hello := &SenderHello{
@@ -44,10 +50,14 @@ func Dial(sp3server url.URL, destination net.IP, auth Authenticator, dialer *web
 
 	go conn.readLoop()
 
+	log.Printf("Sender Hello Written.")
+
 	// Wait for Authenticator to finish challenge.
+	AuthLoop:
 	for {
 		select {
 		case challenge := <-finished:
+			log.Printf("Authenticator completed challenge. sending to server.")
 			if len(challenge) == 0 {
 				conn.Close()
 				return nil, errors.New("Authentication failed.")
@@ -61,19 +71,17 @@ func Dial(sp3server url.URL, destination net.IP, auth Authenticator, dialer *web
 			if err != nil {
 				return nil, err
 			}
-			break
+			break AuthLoop
 		case msg := <-conn.incomingMessage:
+			log.Printf("Got message from SP3 Server")
 			if msg.Status != OKAY {
 				conn.Close()
 				return nil, errors.New("Server closed connection with status: " + string(int(msg.Status)))
-			} else if mode == WEBSOCKET {
+			} else if mode == WEBSOCKET && len(msg.Challenge) > 0 {
 				// On another thread to prevent blocking.
-				da, ok := auth.(DirectAuth)
-				if !ok {
-					conn.Close()
-					return nil, errors.New("Unable to pass authentication challeng to authenticator")
-				}
-				go da.process(msg)
+				go func() {
+					finished <- msg.Challenge
+				}()
 			}
 		}
 	}
@@ -108,11 +116,6 @@ type DirectAuth struct {
 func (d DirectAuth) Authenticate(done chan<- string) (AuthenticationMethod, []byte, error) {
 	d.done = done
 	return WEBSOCKET, []byte{}, nil
-}
-func (d DirectAuth) process(msg ServerMessage) {
-	if len(msg.Challenge) > 0 {
-		d.done <- msg.Challenge
-	}
 }
 
 type Sp3Conn struct {
@@ -151,11 +154,20 @@ func (s *Sp3Conn) ReadFrom(b []byte) (n int, addr net.Addr, err error) {
 	return 0, nil, errors.New("SP3 Connections do not receive data.")
 }
 
+func extractHost(addr net.Addr) (string) {
+	host, _, err := net.SplitHostPort(addr.String())
+	if err != nil || len(host) == 0 {
+		return addr.String()
+	}
+	return host
+}
+
 func (s *Sp3Conn) WriteTo(b []byte, addr net.Addr) (n int, err error) {
-	if addr != s.destination {
+	if extractHost(addr) != extractHost(s.destination) {
+		log.Printf("Invalid Destination %v vs %v", extractHost(addr), extractHost(s.destination))
 		return 0, errors.New("Invalid Destination")
 	}
-	if s.lastError == nil {
+	if s.lastError != nil {
 		return 0, s.lastError
 	}
 	err = s.Conn.WriteMessage(websocket.BinaryMessage, b)

@@ -53,6 +53,7 @@ func (s Server) Authorize(hello sp3.SenderHello) (challenge string, err error) {
 }
 
 func (s Server) Cleanup(remoteAddr string) {
+	log.Printf("Closed connection from %s.", remoteAddr)
 	if conn, ok := s.destinations[remoteAddr]; ok {
 		conn.Close()
 		delete(s.destinations, remoteAddr)
@@ -90,6 +91,8 @@ func SocketHandler(server *Server) http.Handler {
 		if err != nil {
 			return
 		}
+
+	  server.destinations[r.RemoteAddr] = c
 		if _, ok := server.clientHosts[addrHost]; !ok {
 			server.clientHosts[addrHost] = c
 		}
@@ -135,7 +138,7 @@ func SocketHandler(server *Server) http.Handler {
 				if challenge != "" && challenge == auth.Challenge {
 					senderState = sp3.AUTHORIZED
 					// Further messages should now be considered as binary packets.
-					sendStream = CreateSpoofedStream(r.RemoteAddr, auth.DestinationAddress)
+					sendStream = CreateSpoofedStream(addrHost, auth.DestinationAddress)
 					defer close(sendStream)
 
 					resp := sp3.ServerMessage{
@@ -145,6 +148,7 @@ func SocketHandler(server *Server) http.Handler {
 					if err = c.WriteMessage(websocket.TextMessage, dat); err != nil {
 						break
 					}
+					log.Printf("Authorized %v to send to %v.", r.RemoteAddr, auth.DestinationAddress)
 				} else {
 					log.Println("Bad Challenge from", r.RemoteAddr, " expected ", auth.Challenge, " but got ", challenge)
 					resp := sp3.ServerMessage{

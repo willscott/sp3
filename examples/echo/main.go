@@ -16,6 +16,8 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
+	"time"
 )
 
 var server = flag.String("server", "localhost:80", "SP3 Server")
@@ -60,18 +62,23 @@ func main() {
 	opts := gopacket.SerializeOptions{
 		ComputeChecksums: true,
 	}
+
+	stunHost, stunPort, err := net.SplitHostPort(stun.RemoteAddr().String())
+	stunPortInt, err := strconv.Atoi(stunPort)
+
 	ip := &layers.IPv4{
 		Version:  4,
 		IHL:      5,
 		TTL:      64,
 		Protocol: 17,
-		SrcIP:    net.IP{8, 8, 8, 8},
+		SrcIP:    net.ParseIP(stunHost),
 		DstIP:    udpAddr.IP,
 	}
 	udp := &layers.UDP{
-		SrcPort: layers.UDPPort(53),
+		SrcPort: layers.UDPPort(stunPortInt),
 		DstPort: layers.UDPPort(udpAddr.Port),
 	}
+	log.Printf("UDP packet should be sent to %s:%d", ip.DstIP, udp.DstPort)
 	udp.SetNetworkLayerForChecksum(ip)
 	request := "Hello World!"
 	ip.Length = 20 + 8 + uint16(len(request))
@@ -89,9 +96,10 @@ func main() {
 
 	// Listen for it.
 	pkt := make([]byte, 2048)
+	stun.SetDeadline(time.Now().Add(time.Second))
 	n, err := stun.Read(pkt)
 	if err != nil {
 		panic(err)
 	}
-	panic("Got spoofed packet: " + string(pkt[0:n]))
+	log.Printf("Got spoofed packet: " + string(pkt[0:n]))
 }
