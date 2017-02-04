@@ -15,10 +15,10 @@ import (
 
 var (
 	// If TestChannel is set, spoofed packets will be sent to it, rather than to pcap.
-	TestSpoofChannel    chan []byte
-	handle     *pcap.Handle
-	ipv4Layer  layers.IPv4
-	linkHeader []byte
+	TestSpoofChannel chan []byte
+	handle           *pcap.Handle
+	ipv4Layer        layers.IPv4
+	linkHeader       []byte
 )
 var ipv4Parser *gopacket.DecodingLayerParser = gopacket.NewDecodingLayerParser(layers.LayerTypeIPv4, &ipv4Layer)
 

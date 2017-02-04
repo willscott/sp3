@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/pborman/uuid"
+	"github.com/willscott/sp3"
 )
 
 type Server struct {
@@ -22,8 +23,8 @@ type Server struct {
 	clientHosts  map[string]*websocket.Conn
 }
 
-func (s Server) Authorize(hello SenderHello) (challenge string, err error) {
-	if hello.AuthenticationMethod == PATHREFLECTION {
+func (s Server) Authorize(hello sp3.SenderHello) (challenge string, err error) {
+	if hello.AuthenticationMethod == sp3.PATHREFLECTION {
 		state := &PathReflectionState{}
 		if err = json.Unmarshal(hello.AuthenticationOptions, state); err != nil {
 			return "", err
@@ -32,10 +33,10 @@ func (s Server) Authorize(hello SenderHello) (challenge string, err error) {
 			return "", errors.New("Untrusted Server")
 		}
 		return SendPathReflectionChallenge(state)
-	} else if hello.AuthenticationMethod == WEBSOCKET {
+	} else if hello.AuthenticationMethod == sp3.WEBSOCKET {
 		if val, ok := s.clientHosts[hello.DestinationAddress]; ok {
-			resp := ServerMessage{
-				Status:    OKAY,
+			resp := sp3.ServerMessage{
+				Status:    sp3.OKAY,
 				Challenge: uuid.New(),
 			}
 			dat, _ := json.Marshal(resp)
@@ -92,7 +93,7 @@ func SocketHandler(server *Server) http.Handler {
 		if _, ok := server.clientHosts[addrHost]; !ok {
 			server.clientHosts[addrHost] = c
 		}
-		senderState := SENDERHELLO
+		senderState := sp3.SENDERHELLO
 		var sendStream chan<- []byte
 		challenge := ""
 
@@ -103,8 +104,8 @@ func SocketHandler(server *Server) http.Handler {
 				log.Println("read err:", err)
 				break
 			}
-			if senderState == SENDERHELLO && msgType == websocket.TextMessage {
-				hello := SenderHello{}
+			if senderState == sp3.SENDERHELLO && msgType == websocket.TextMessage {
+				hello := sp3.SenderHello{}
 				err := json.Unmarshal(msg, &hello)
 				if err != nil {
 					log.Println("Hello err:", err)
@@ -114,31 +115,31 @@ func SocketHandler(server *Server) http.Handler {
 				chal, err := server.Authorize(hello)
 				if err != nil {
 					log.Println("Authorize err:", err)
-					resp := ServerMessage{
-						Status: UNAUTHORIZED,
+					resp := sp3.ServerMessage{
+						Status: sp3.UNAUTHORIZED,
 					}
 					dat, _ := json.Marshal(resp)
 					c.WriteMessage(websocket.TextMessage, dat)
 					break
 				}
 				challenge = chal
-				senderState = HELLORECEIVED
+				senderState = sp3.HELLORECEIVED
 				continue
-			} else if senderState == HELLORECEIVED && msgType == websocket.TextMessage {
-				auth := SenderAuthorization{}
+			} else if senderState == sp3.HELLORECEIVED && msgType == websocket.TextMessage {
+				auth := sp3.SenderAuthorization{}
 				err := json.Unmarshal(msg, &auth)
 				if err != nil {
 					log.Println("Auth err:", err)
 					break
 				}
 				if challenge != "" && challenge == auth.Challenge {
-					senderState = AUTHORIZED
+					senderState = sp3.AUTHORIZED
 					// Further messages should now be considered as binary packets.
 					sendStream = CreateSpoofedStream(r.RemoteAddr, auth.DestinationAddress)
 					defer close(sendStream)
 
-					resp := ServerMessage{
-						Status: OKAY,
+					resp := sp3.ServerMessage{
+						Status: sp3.OKAY,
 					}
 					dat, _ := json.Marshal(resp)
 					if err = c.WriteMessage(websocket.TextMessage, dat); err != nil {
@@ -146,15 +147,15 @@ func SocketHandler(server *Server) http.Handler {
 					}
 				} else {
 					log.Println("Bad Challenge from", r.RemoteAddr, " expected ", auth.Challenge, " but got ", challenge)
-					resp := ServerMessage{
-						Status: UNAUTHORIZED,
+					resp := sp3.ServerMessage{
+						Status: sp3.UNAUTHORIZED,
 					}
 					dat, _ := json.Marshal(resp)
 					c.WriteMessage(websocket.TextMessage, dat)
 					break
 				}
 				continue
-			} else if senderState == AUTHORIZED && msgType == websocket.BinaryMessage {
+			} else if senderState == sp3.AUTHORIZED && msgType == websocket.BinaryMessage {
 				// Main forwarding loop.
 				sendStream <- msg
 				continue
@@ -177,7 +178,7 @@ func NewServer(conf Config) *Server {
 	mux := http.NewServeMux()
 	mux.Handle("/sp3", SocketHandler(server))
 	// By default serve a demo site.
-	mux.Handle("/client/", http.StripPrefix("/client/", http.FileServer(http.Dir("../client"))))
+	mux.Handle("/client/", http.StripPrefix("/client/", http.FileServer(http.Dir("../demo"))))
 	mux.Handle("/ip.js", IPHandler(server))
 	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/client/", 301)

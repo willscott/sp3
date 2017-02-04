@@ -54,17 +54,17 @@ func SendPathReflectionChallenge(state *PathReflectionState) (string, error) {
 		ComputeChecksums: true,
 	}
 	ip := &layers.IPv4{
-		Version: 4,
-		IHL: 5,
-		TTL: 64,
+		Version:  4,
+		IHL:      5,
+		TTL:      64,
 		Protocol: 6,
-		SrcIP: state.clientIP,
-		DstIP: state.serverIP,
+		SrcIP:    state.clientIP,
+		DstIP:    state.serverIP,
 	}
 	tcp := &layers.TCP{
 		SrcPort: layers.TCPPort(state.clientPort),
 		DstPort: layers.TCPPort(state.serverPort),
-		Window: 4380,
+		Window:  4380,
 		Seq:     state.sequenceNumber,
 	}
 	tcp.SetNetworkLayerForChecksum(ip)

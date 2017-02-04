@@ -1,4 +1,4 @@
-package main
+package sp3
 
 type AuthenticationMethod int
 
