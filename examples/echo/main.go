@@ -11,6 +11,7 @@ import (
 	"github.com/google/gopacket/layers"
 	"github.com/willscott/goturn/client"
 	"github.com/willscott/sp3"
+	"log"
 	"net"
 	"net/url"
 	"os"
@@ -41,10 +42,12 @@ func main() {
 		panic(err)
 	}
 
-	u := url.URL{}
+	base := url.URL{}
+	u, _ := base.Parse(*server)
+	log.Printf("Connecting to SP3 at: %v", u)
 
 	// Create a connection to the server
-	conn, err := sp3.Dial(u, udpAddr.IP, sp3.DirectAuth{}, nil)
+	conn, err := sp3.Dial(*u, udpAddr.IP, sp3.DirectAuth{}, nil)
 	if err != nil {
 		panic(err)
 	}
