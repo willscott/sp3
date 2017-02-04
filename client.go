@@ -16,8 +16,6 @@ func Dial(sp3server url.URL, destination net.IP, auth Authenticator, dialer *web
 	finished := make(chan string)
 	mode, opts, err := auth.Authenticate(finished)
 
-	log.Printf("Authenticate finished. Using mode %d", mode)
-
 	if err != nil {
 		return nil, err
 	}
@@ -34,8 +32,6 @@ func Dial(sp3server url.URL, destination net.IP, auth Authenticator, dialer *web
 		return nil, err
 	}
 
-	log.Printf("Web Socket connection established with server.")
-
 	// Send SenderHello.
 	hello := &SenderHello{
 		destination.String(),
@@ -50,14 +46,11 @@ func Dial(sp3server url.URL, destination net.IP, auth Authenticator, dialer *web
 
 	go conn.readLoop()
 
-	log.Printf("Sender Hello Written.")
-
 	// Wait for Authenticator to finish challenge.
 	AuthLoop:
 	for {
 		select {
 		case challenge := <-finished:
-			log.Printf("Authenticator completed challenge. sending to server.")
 			if len(challenge) == 0 {
 				conn.Close()
 				return nil, errors.New("Authentication failed.")
@@ -73,7 +66,6 @@ func Dial(sp3server url.URL, destination net.IP, auth Authenticator, dialer *web
 			}
 			break AuthLoop
 		case msg := <-conn.incomingMessage:
-			log.Printf("Got message from SP3 Server")
 			if msg.Status != OKAY {
 				conn.Close()
 				return nil, errors.New("Server closed connection with status: " + string(int(msg.Status)))
@@ -145,7 +137,10 @@ func (s *Sp3Conn) watchLoop() {
 			if ok {
 				s.Close()
 				s.lastError = errors.New("Server Closed Connection: " + string(int(msg.Status)))
+			} else {
+				s.lastError = errors.New("Network Connection Closed")
 			}
+			return
 		}
 	}
 }
@@ -192,7 +187,7 @@ func (s *Sp3Conn) SetDeadline(t time.Time) error {
 	if s.lastError != nil {
 		return s.lastError
 	}
-	return nil
+	return s.Conn.SetWriteDeadline(t)
 }
 
 func (s *Sp3Conn) SetReadDeadline(t time.Time) error {
@@ -203,5 +198,5 @@ func (s *Sp3Conn) SetWriteDeadline(t time.Time) error {
 	if s.lastError != nil {
 		return s.lastError
 	}
-	return nil
+	return s.Conn.SetWriteDeadline(t)
 }
