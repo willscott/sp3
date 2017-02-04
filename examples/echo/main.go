@@ -53,6 +53,8 @@ func main() {
 	}
 	defer conn.Close()
 
+	log.Printf("Connection Established. Sending packet.")
+
 	// Make a packet.
 	buf := gopacket.NewSerializeBuffer()
 	opts := gopacket.SerializeOptions{
