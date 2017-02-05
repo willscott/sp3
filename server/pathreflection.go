@@ -10,9 +10,12 @@ package main
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"io/ioutil"
+	"log"
 	"net"
 )
 
@@ -24,9 +27,19 @@ type PathReflectionState struct {
 	sequenceNumber uint32
 }
 
-//TODO: load from json file / make dynamic
-var PathReflectionServers map[string]string = map[string]string{
-	"198.35.26.96": "wikimedia.org",
+func getPathReflectionServers() map[string]string {
+	data, err := ioutil.ReadFile("pathreflection.json")
+	if err != nil {
+		log.Fatalf("Couldn't read path reflection config: %s", err)
+		return nil
+	}
+
+	var config map[string]string
+	if err := json.Unmarshal(data, &config); err != nil {
+		log.Fatalf("Couldn't parse path reflection config: %s", err)
+		return nil
+	}
+	return config
 }
 
 func genToken() (string, error) {
@@ -40,7 +53,7 @@ func genToken() (string, error) {
 }
 
 func PathReflectionServerTrusted(state *PathReflectionState) bool {
-	_, ok := PathReflectionServers[state.serverIP.String()]
+	_, ok := getPathReflectionServers()[state.serverIP.String()]
 	return ok
 }
 
@@ -68,7 +81,7 @@ func SendPathReflectionChallenge(state *PathReflectionState) (string, error) {
 		Seq:     state.sequenceNumber,
 	}
 	tcp.SetNetworkLayerForChecksum(ip)
-	host := PathReflectionServers[state.serverIP.String()]
+	host := getPathReflectionServers()[state.serverIP.String()]
 	request := "GET /sp3." + token + "/ HTTP/1.0\r\nHost: " + host + "\r\n\r\n"
 	ip.Length = 20 + 20 + uint16(len(request))
 	payload := gopacket.Payload([]byte(request))
