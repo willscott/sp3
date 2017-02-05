@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/willscott/sp3/server/lib"
 	"io/ioutil"
 	"log"
 	"os"
@@ -18,13 +19,6 @@ var (
 	srcMAC     *string = flag.String("srcMAC", "000000000000", "Ethernet SRC for sending")
 	dstMAC     *string = flag.String("dstMAC", "000000000000", "Ethernet DST for sending")
 )
-
-type Config struct {
-	Port   int
-	Device string
-	Src    string
-	Dst    string
-}
 
 func main() {
 	flag.Parse()
@@ -47,7 +41,7 @@ func main() {
 			log.Fatalf("Failed to create config file: %s", err)
 			return
 		}
-		defaultConfig, _ := json.Marshal(Config{
+		defaultConfig, _ := json.Marshal(server.Config{
 			Port:   *port,
 			Device: *device,
 			Src:    *srcMAC,
@@ -66,7 +60,7 @@ func main() {
 		return
 	}
 
-	var config Config
+	var config server.Config
 	if err := json.Unmarshal(configString, &config); err != nil {
 		log.Fatalf("Couldn't parse config: %s", err)
 		return
@@ -80,9 +74,9 @@ func main() {
 	}
 
 	fmt.Printf("Using config %+v \n", config)
-	if err = SetupSpoofingSockets(config); err != nil {
+	if err = server.SetupSpoofingSockets(config); err != nil {
 		log.Fatalf("Could not initialize sockets: %s", err)
 		return
 	}
-	NewServer(config)
+	server.NewServer(config)
 }

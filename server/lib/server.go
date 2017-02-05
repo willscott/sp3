@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"encoding/json"
@@ -21,6 +21,13 @@ type Server struct {
 	config       Config
 	destinations map[string]*websocket.Conn
 	clientHosts  map[string]*websocket.Conn
+}
+
+type Config struct {
+	Port   int
+	Device string
+	Src    string
+	Dst    string
 }
 
 func (s Server) Authorize(hello sp3.SenderHello) (challenge string, err error) {

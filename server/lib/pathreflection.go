@@ -5,7 +5,7 @@
  * to the client.
  */
 
-package main
+package server
 
 import (
 	"crypto/rand"
