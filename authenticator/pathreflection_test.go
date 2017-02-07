@@ -65,7 +65,7 @@ func TestAuthenticate(t *testing.T) {
 	}
 
 	// Strip off the ip header.
-	injectPkt := <- server.TestSpoofChannel
+	injectPkt := <-server.TestSpoofChannel
 	authConnServer.Write(injectPkt[20:])
 
 	// auth hsould now be done

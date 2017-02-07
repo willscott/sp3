@@ -26,11 +26,11 @@ type PathReflectionAuth struct {
 
 //This should be kept in-sync with server/lib/pathreflection
 type pathReflectionState struct {
-	ServerIP       net.IP
-	ServerPort     uint16
-	ClientIP       net.IP
-	ClientPort     uint16
-	SequenceNumber uint32
+	ServerIP              net.IP
+	ServerPort            uint16
+	ClientIP              net.IP
+	ClientPort            uint16
+	SequenceNumber        uint32
 	AcknowledgementNumber uint32
 }
 
@@ -149,7 +149,7 @@ func (p *PathReflectionAuth) Authenticate(done chan<- string) (sp3.Authenticatio
 	}
 
 	// Set up the listener for server response to injected query.
-  go p.listen()
+	go p.listen()
 
 	// Leak State
 	data, err := json.Marshal(state)
@@ -182,7 +182,7 @@ func (p *PathReflectionAuth) listen() {
 			p.done <- ""
 			return
 		}
-		p.done <- strpayload[idx:idx + end]
+		p.done <- strpayload[idx : idx+end]
 	} else {
 		err := rpkt.ErrorLayer()
 		log.Printf("Couldn't parse packet!", err)

@@ -20,11 +20,11 @@ import (
 )
 
 type PathReflectionState struct {
-	ServerIP       net.IP
-	ServerPort     uint16
-	ClientIP       net.IP
-	ClientPort     uint16
-	SequenceNumber uint32
+	ServerIP              net.IP
+	ServerPort            uint16
+	ClientIP              net.IP
+	ClientPort            uint16
+	SequenceNumber        uint32
 	AcknowledgementNumber uint32
 }
 
@@ -84,12 +84,12 @@ func SendPathReflectionChallenge(conf Config, state *PathReflectionState) (strin
 		DstIP:    state.ServerIP,
 	}
 	tcp := &layers.TCP{
-		SrcPort: layers.TCPPort(state.ClientPort),
-		DstPort: layers.TCPPort(state.ServerPort),
-		Window:  4380,
-		Seq:     state.SequenceNumber,
-		Ack:     state.AcknowledgementNumber,
-		ACK:     true,
+		SrcPort:    layers.TCPPort(state.ClientPort),
+		DstPort:    layers.TCPPort(state.ServerPort),
+		Window:     4380,
+		Seq:        state.SequenceNumber,
+		Ack:        state.AcknowledgementNumber,
+		ACK:        true,
 		DataOffset: 5,
 	}
 	tcp.SetNetworkLayerForChecksum(ip)
