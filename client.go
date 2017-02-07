@@ -47,7 +47,7 @@ func Dial(sp3server url.URL, destination net.IP, auth Authenticator, dialer *web
 	go conn.readLoop()
 
 	// Wait for Authenticator to finish challenge.
-	AuthLoop:
+AuthLoop:
 	for {
 		select {
 		case challenge := <-finished:
@@ -149,7 +149,7 @@ func (s *Sp3Conn) ReadFrom(b []byte) (n int, addr net.Addr, err error) {
 	return 0, nil, errors.New("SP3 Connections do not receive data.")
 }
 
-func extractHost(addr net.Addr) (string) {
+func extractHost(addr net.Addr) string {
 	host, _, err := net.SplitHostPort(addr.String())
 	if err != nil || len(host) == 0 {
 		return addr.String()

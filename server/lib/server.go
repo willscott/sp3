@@ -24,10 +24,11 @@ type Server struct {
 }
 
 type Config struct {
-	Port   int
-	Device string
-	Src    string
-	Dst    string
+	Port               int
+	Device             string
+	Src                string
+	Dst                string
+	PathReflectionFile string
 }
 
 func (s Server) Authorize(hello sp3.SenderHello) (challenge string, err error) {
@@ -36,10 +37,10 @@ func (s Server) Authorize(hello sp3.SenderHello) (challenge string, err error) {
 		if err = json.Unmarshal(hello.AuthenticationOptions, state); err != nil {
 			return "", err
 		}
-		if !PathReflectionServerTrusted(state) {
+		if !PathReflectionServerTrusted(s.config, state) {
 			return "", errors.New("Untrusted Server")
 		}
-		return SendPathReflectionChallenge(state)
+		return SendPathReflectionChallenge(s.config, state)
 	} else if hello.AuthenticationMethod == sp3.WEBSOCKET {
 		if val, ok := s.clientHosts[hello.DestinationAddress]; ok {
 			resp := sp3.ServerMessage{
@@ -99,7 +100,7 @@ func SocketHandler(server *Server) http.Handler {
 			return
 		}
 
-	  server.destinations[r.RemoteAddr] = c
+		server.destinations[r.RemoteAddr] = c
 		if _, ok := server.clientHosts[addrHost]; !ok {
 			server.clientHosts[addrHost] = c
 		}
@@ -192,15 +193,18 @@ func NewServer(conf Config) *Server {
 	mux.Handle("/client/", http.StripPrefix("/client/", http.FileServer(http.Dir("../demo"))))
 	mux.Handle("/ip.js", IPHandler(server))
 	mux.Handle("/pathreflection.json", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "pathreflection.json")
+		http.ServeFile(w, r, conf.PathReflectionFile)
 	}))
 	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/client/", 301)
 	}))
 
 	webServer := &http.Server{Addr: addr, Handler: mux}
-	webServer.ListenAndServe()
 
 	server.webServer = *webServer
 	return server
+}
+
+func (s *Server) Serve() error {
+	return s.webServer.ListenAndServe()
 }

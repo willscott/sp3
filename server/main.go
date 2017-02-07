@@ -42,10 +42,11 @@ func main() {
 			return
 		}
 		defaultConfig, _ := json.Marshal(server.Config{
-			Port:   *port,
-			Device: *device,
-			Src:    *srcMAC,
-			Dst:    *dstMAC,
+			Port:               *port,
+			Device:             *device,
+			Src:                *srcMAC,
+			Dst:                *dstMAC,
+			PathReflectionFile: "pathreflection.json",
 		})
 		if _, err := configHandle.Write(defaultConfig); err != nil {
 			log.Fatalf("Failed to write default config: %s", err)
@@ -72,11 +73,15 @@ func main() {
 	if config.Device == "" {
 		config.Device = "eth0"
 	}
+	if config.PathReflectionFile == "" {
+		config.PathReflectionFile = "pathreflection.json"
+	}
 
 	fmt.Printf("Using config %+v \n", config)
 	if err = server.SetupSpoofingSockets(config); err != nil {
 		log.Fatalf("Could not initialize sockets: %s", err)
 		return
 	}
-	server.NewServer(config)
+	s := server.NewServer(config)
+	s.Serve()
 }

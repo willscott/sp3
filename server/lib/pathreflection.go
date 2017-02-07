@@ -20,15 +20,16 @@ import (
 )
 
 type PathReflectionState struct {
-	serverIP       net.IP
-	serverPort     uint16
-	clientIP       net.IP
-	clientPort     uint16
-	sequenceNumber uint32
+	ServerIP       net.IP
+	ServerPort     uint16
+	ClientIP       net.IP
+	ClientPort     uint16
+	SequenceNumber uint32
+	AcknowledgementNumber uint32
 }
 
-func getPathReflectionServers() map[string]string {
-	data, err := ioutil.ReadFile("pathreflection.json")
+func getPathReflectionServers(path string) map[string]string {
+	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatalf("Couldn't read path reflection config: %s", err)
 		return nil
@@ -49,15 +50,23 @@ func genToken() (string, error) {
 		return "", err
 	}
 	encoded := base64.StdEncoding.EncodeToString(b)
-	return encoded, nil
+	// remove non alphanumeric characters
+	output := ""
+	for _, code := range encoded {
+		if code == '+' || code == '/' || code == '=' {
+			continue
+		}
+		output = output + string(code)
+	}
+	return output, nil
 }
 
-func PathReflectionServerTrusted(state *PathReflectionState) bool {
-	_, ok := getPathReflectionServers()[state.serverIP.String()]
+func PathReflectionServerTrusted(conf Config, state *PathReflectionState) bool {
+	_, ok := getPathReflectionServers(conf.PathReflectionFile)[state.ServerIP.String()]
 	return ok
 }
 
-func SendPathReflectionChallenge(state *PathReflectionState) (string, error) {
+func SendPathReflectionChallenge(conf Config, state *PathReflectionState) (string, error) {
 	token, err := genToken()
 	if err != nil {
 		return "", err
@@ -71,17 +80,20 @@ func SendPathReflectionChallenge(state *PathReflectionState) (string, error) {
 		IHL:      5,
 		TTL:      64,
 		Protocol: 6,
-		SrcIP:    state.clientIP,
-		DstIP:    state.serverIP,
+		SrcIP:    state.ClientIP,
+		DstIP:    state.ServerIP,
 	}
 	tcp := &layers.TCP{
-		SrcPort: layers.TCPPort(state.clientPort),
-		DstPort: layers.TCPPort(state.serverPort),
+		SrcPort: layers.TCPPort(state.ClientPort),
+		DstPort: layers.TCPPort(state.ServerPort),
 		Window:  4380,
-		Seq:     state.sequenceNumber,
+		Seq:     state.SequenceNumber,
+		Ack:     state.AcknowledgementNumber,
+		ACK:     true,
+		DataOffset: 5,
 	}
 	tcp.SetNetworkLayerForChecksum(ip)
-	host := getPathReflectionServers()[state.serverIP.String()]
+	host := getPathReflectionServers(conf.PathReflectionFile)[state.ServerIP.String()]
 	request := "GET /sp3." + token + "/ HTTP/1.0\r\nHost: " + host + "\r\n\r\n"
 	ip.Length = 20 + 20 + uint16(len(request))
 	payload := gopacket.Payload([]byte(request))
@@ -90,7 +102,7 @@ func SendPathReflectionChallenge(state *PathReflectionState) (string, error) {
 	}
 
 	//send.
-	if err = SpoofIPv4Message(buf.Bytes(), state.clientIP, state.serverIP); err != nil {
+	if err = SpoofIPv4Message(buf.Bytes(), state.ClientIP, state.ServerIP); err != nil {
 		return "", err
 	}
 

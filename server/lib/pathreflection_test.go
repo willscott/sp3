@@ -15,8 +15,10 @@ func TestGenPacket(t *testing.T) {
 		net.IP{127, 0, 0, 1},
 		uint16(8081),
 		0,
+		0,
 	}
-	challenge, err := SendPathReflectionChallenge(state)
+	conf := Config{0, "", "", "", "../pathreflection.json"}
+	challenge, err := SendPathReflectionChallenge(conf, state)
 	if err != nil {
 		t.Fatal("Error sending challenge", err)
 	}
