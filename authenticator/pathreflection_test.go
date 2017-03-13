@@ -68,7 +68,7 @@ func TestAuthenticate(t *testing.T) {
 	injectPkt := <-server.TestSpoofChannel
 	authConnServer.Write(injectPkt[20:])
 
-	// auth hsould now be done
+	// auth should now be done
 	token := <-done
 	if token != challenge {
 		t.Fatal("Authentication extracted wrong token from response.")
